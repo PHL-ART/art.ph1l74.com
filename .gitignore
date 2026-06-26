@@ -1,1 +1,7 @@
+/docs/refs/**
+/docs/specs/**
+**/superpowers/
+
+
 .env
+CLAUDE.md
