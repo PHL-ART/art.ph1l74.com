@@ -1,6 +1,6 @@
 /docs/refs/**
 /docs/specs/**
-**/superpowers/
+.superpowers/
 
 
 .env
