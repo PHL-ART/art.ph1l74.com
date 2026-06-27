@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
 import { formatDate } from '@/shared/lib/formatDate'
 import { cn } from '@/shared/lib/cn'
+import { CARD_GRADIENTS } from '@/shared/lib/gradients'
 
 interface MediaCardProps {
   title: string
@@ -16,7 +17,7 @@ interface MediaCardProps {
   className?: string
 }
 
-export function MediaCard({ title, slug, coverImageKey, excerpt, publishedAt, categories, tags, placeholderGradient = '/gradient-2.png', className }: MediaCardProps) {
+export function MediaCard({ title, slug, coverImageKey, excerpt, publishedAt, categories, tags, placeholderGradient = CARD_GRADIENTS[0], className }: MediaCardProps) {
   const date = formatDate(publishedAt)
 
   const categoryLabel = [
@@ -51,7 +52,7 @@ export function MediaCard({ title, slug, coverImageKey, excerpt, publishedAt, ca
         ) : (
           <div
             className="absolute inset-0"
-            style={{ background: 'center/cover no-repeat', backgroundImage: `url('${placeholderGradient}')` }}
+            style={{ background: placeholderGradient }}
           />
         )}
       </div>

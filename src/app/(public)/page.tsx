@@ -4,19 +4,9 @@ import { getFeaturedPost, getRecentPosts } from '@/entities/post/queries'
 import { MediaCard } from '@/shared/ui'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
 import { formatDate } from '@/shared/lib/formatDate'
+import { CARD_GRADIENTS, HERO_GRADIENT } from '@/shared/lib/gradients'
 
 export const revalidate = 60
-
-const CARD_GRADIENTS = [
-  '/gradient-2.png',
-  '/gradient-3.png',
-  '/gradient-4.png',
-  '/gradient-1.png',
-  '/gradient-red.png',
-  '/gradient-2.png',
-  '/gradient-3.png',
-  '/gradient-4.png',
-]
 
 function extractLead(body: unknown): string | null {
   if (!body || typeof body !== 'object') return null
@@ -25,8 +15,6 @@ function extractLead(body: unknown): string | null {
   const lead = b.blocks.find(bl => bl.type === 'text' && bl.isLead)
   return lead?.html ?? b.blocks.find(bl => bl.type === 'text')?.html ?? null
 }
-
-const HERO_GRADIENT = 'radial-gradient(120% 90% at 12% 0%, #ff3b2f 0%, #b8201a 26%, #5c1512 55%, #1c0c0b 100%)'
 
 export default async function HomePage() {
   const [featured, recent] = await Promise.all([getFeaturedPost(), getRecentPosts(12)])

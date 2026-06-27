@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getCategoryBySlug } from '@/entities/category/queries'
 import { getPostsByCategory } from '@/entities/post/queries'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
+import { CARD_GRADIENTS } from '@/shared/lib/gradients'
 
 export const revalidate = 60
 
@@ -11,13 +12,6 @@ interface Props {
   params: { categorySlug: string }
   searchParams: { page?: string }
 }
-
-const CARD_GRADIENTS = [
-  'radial-gradient(120% 90% at 12% 0%, #ff3b2f 0%, #b8201a 26%, #5c1512 55%, #1c0c0b 100%)',
-  'linear-gradient(135deg, #1a3a2a 0%, #0e4d3a 40%, #072e22 100%)',
-  'linear-gradient(135deg, #1a1a3a 0%, #2d1b4e 50%, #0e0a1c 100%)',
-  'linear-gradient(135deg, #2a1a0e 0%, #4d2b0e 50%, #1c0e07 100%)',
-]
 
 function extractLead(body: unknown): string | null {
   if (!body || typeof body !== 'object') return null
