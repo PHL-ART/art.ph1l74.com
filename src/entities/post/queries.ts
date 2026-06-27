@@ -3,6 +3,8 @@ import type { PostPreview, PostFull, Block } from './types'
 
 const categorySelect = { id: true, name: true, slug: true } as const
 
+const tagSelect = { id: true, name: true, slug: true } as const
+
 const postPreviewSelect = {
   id: true,
   title: true,
@@ -11,18 +13,19 @@ const postPreviewSelect = {
   publishedAt: true,
   isFeatured: true,
   categories: { select: categorySelect },
+  tags: { select: tagSelect },
 } as const
 
-export async function getFeaturedPost(): Promise<PostPreview | null> {
+export async function getFeaturedPost(): Promise<(PostPreview & { body: unknown }) | null> {
   return prisma.post.findFirst({
     where: { status: 'PUBLISHED', isFeatured: true },
-    select: postPreviewSelect,
+    select: { ...postPreviewSelect, body: true },
   })
 }
 
 export async function getRecentPosts(limit: number): Promise<PostPreview[]> {
   return prisma.post.findMany({
-    where: { status: 'PUBLISHED' },
+    where: { status: 'PUBLISHED', isFeatured: false },
     orderBy: { publishedAt: 'desc' },
     take: limit,
     select: postPreviewSelect,
@@ -42,13 +45,15 @@ export async function getPostBySlug(slug: string): Promise<PostFull | null> {
     },
   })
   if (!post) return null
-  return { ...post, body: post.body as Block[] } as PostFull
+  const rawBody = post.body as { blocks?: Block[] } | Block[]
+  const blocks: Block[] = Array.isArray(rawBody) ? rawBody : (rawBody?.blocks ?? [])
+  return { ...post, body: blocks } as PostFull
 }
 
 export async function getPostsByCategory(
   categorySlug: string,
   { page, limit }: { page: number; limit: number }
-): Promise<{ posts: PostPreview[]; total: number }> {
+): Promise<{ posts: (PostPreview & { body: unknown })[]; total: number }> {
   const where = {
     status: 'PUBLISHED' as const,
     categories: { some: { slug: categorySlug } },
@@ -59,7 +64,7 @@ export async function getPostsByCategory(
       orderBy: { publishedAt: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
-      select: postPreviewSelect,
+      select: { ...postPreviewSelect, body: true },
     }),
     prisma.post.count({ where }),
   ])

@@ -39,3 +39,16 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
 }
+
+/* Theme-aware logo swap */
+.logo-dark { display: block; }
+.logo-light { display: none; }
+[data-theme='light'] .logo-dark { display: none; }
+[data-theme='light'] .logo-light { display: block; }
+
+/* Tailwind utility aliases for design tokens */
+.text-text { color: var(--color-text); }
+.text-caption { color: var(--color-caption); }
+.text-accent { color: var(--color-accent); }
+.bg-header { background-color: var(--color-bg-header); }
+.border-hairline { border-color: var(--color-hairline); }

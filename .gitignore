@@ -1,6 +1,7 @@
 /docs/refs/**
 /docs/specs/**
 .superpowers/
+**/superpowers/
 node_modules/
 .next/
 

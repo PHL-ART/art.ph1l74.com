@@ -14,6 +14,7 @@ export type Block =
 
 export type PostPreview = Pick<Post, 'id' | 'title' | 'slug' | 'coverImageKey' | 'publishedAt' | 'isFeatured'> & {
   categories: Pick<Category, 'id' | 'name' | 'slug'>[]
+  tags: Pick<Tag, 'id' | 'name' | 'slug'>[]
 }
 
 export type PostFull = Post & {

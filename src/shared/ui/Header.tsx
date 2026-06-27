@@ -21,15 +21,15 @@ export function Header({ categories }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-30 bg-header border-b border-hairline">
+    <header className="sticky top-0 z-30" style={{ background: 'var(--color-bg-header)' }}>
+      {/* ── Main header row ─────────────────────────── */}
       <div
         className="flex items-center justify-between"
-        style={{ padding: '22px 44px' }}
+        style={{ padding: '20px 44px' }}
       >
-        {/* Logo — white on dark, black on light via variant */}
-        <Logo size={40} />
+        <Logo size={38} />
 
-        {/* Nav — desktop */}
+        {/* Desktop nav — centered */}
         <nav className="hidden md:flex gap-[30px]">
           {categories.map(cat => {
             const isActive = pathname === `/${cat.slug}` || pathname.startsWith(`/${cat.slug}/`)
@@ -49,9 +49,9 @@ export function Header({ categories }: HeaderProps) {
           })}
         </nav>
 
-        {/* Right: inline search + theme toggle */}
-        <div className="flex items-center gap-[14px]">
-          {/* Inline search input — desktop */}
+        {/* Right: search + theme */}
+        <div className="flex items-center gap-3">
+          {/* Desktop inline search */}
           <form onSubmit={handleSearch} className="hidden md:flex items-center relative">
             <svg
               width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -71,12 +71,12 @@ export function Header({ categories }: HeaderProps) {
             />
           </form>
 
-          {/* Search icon — mobile only */}
+          {/* Mobile search icon */}
           <Link
             href="/search"
             aria-label="Поиск"
-            className="md:hidden w-11 h-11 flex items-center justify-center"
-            style={{ color: 'var(--color-caption)' }}
+            className="md:hidden flex items-center justify-center"
+            style={{ width: '44px', height: '44px', color: 'var(--color-caption)' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -86,6 +86,35 @@ export function Header({ categories }: HeaderProps) {
           <ThemeToggle />
         </div>
       </div>
+
+      {/* ── Mobile secondary nav row ──────────────── */}
+      <nav
+        className="md:hidden flex overflow-x-auto"
+        style={{
+          padding: '0 20px 12px',
+          gap: '28px',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+        aria-label="Разделы"
+      >
+        {categories.map(cat => {
+          const isActive = pathname === `/${cat.slug}` || pathname.startsWith(`/${cat.slug}/`)
+          return (
+            <Link
+              key={cat.id}
+              href={`/${cat.slug}`}
+              className="font-nav font-semibold text-[13px] tracking-[0.06em] uppercase flex-shrink-0 pb-1"
+              style={{
+                color: isActive ? 'var(--color-text)' : 'var(--color-caption)',
+                borderBottom: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
+              }}
+            >
+              {cat.name}
+            </Link>
+          )
+        })}
+      </nav>
     </header>
   )
 }

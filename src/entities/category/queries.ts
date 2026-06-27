@@ -20,11 +20,8 @@ export async function getCategoryHeroBg(category: Category): Promise<CategoryHer
   })
 
   if (post) {
-    const blocks = post.body as {
-      type: string
-      s3Key?: string
-      photos?: { s3Key: string }[]
-    }[]
+    const body = post.body as { blocks?: { type: string; s3Key?: string; photos?: { s3Key: string }[] }[] }
+    const blocks = Array.isArray(body) ? body : (body?.blocks ?? [])
 
     const photoBlock = blocks.find(b => b.type === 'photo' || b.type === 'panorama')
     const gridBlock = blocks.find(b => b.type === 'photoGrid')

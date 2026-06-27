@@ -1,6 +1,5 @@
 import { Header } from '@/shared/ui/Header'
 import { Footer } from '@/shared/ui/Footer'
-import { BottomNav } from '@/shared/ui/BottomNav'
 import { getPublicCategories } from '@/entities/category/queries'
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -8,9 +7,8 @@ export default async function PublicLayout({ children }: { children: React.React
   return (
     <>
       <Header categories={categories} />
-      <main className="min-h-screen pb-20 md:pb-0">{children}</main>
+      <main className="min-h-screen">{children}</main>
       <Footer />
-      <BottomNav categories={categories} />
     </>
   )
 }

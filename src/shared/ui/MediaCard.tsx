@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
+import { formatDate } from '@/shared/lib/formatDate'
 import { cn } from '@/shared/lib/cn'
 
 interface MediaCardProps {
@@ -10,16 +11,18 @@ interface MediaCardProps {
   excerpt?: string | null
   publishedAt: Date | null
   categories: { id: string; name: string; slug: string }[]
+  tags?: { id: string; name: string; slug: string }[]
+  placeholderGradient?: string
   className?: string
 }
 
-export function MediaCard({ title, slug, coverImageKey, excerpt, publishedAt, categories, className }: MediaCardProps) {
-  // Date formatted short: "24 июня · 6 мин"
-  const date = publishedAt
-    ? new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long' }).format(new Date(publishedAt))
-    : null
+export function MediaCard({ title, slug, coverImageKey, excerpt, publishedAt, categories, tags, placeholderGradient = '/gradient-2.png', className }: MediaCardProps) {
+  const date = formatDate(publishedAt)
 
-  const categoryLabel = categories.map(c => c.name).join(' · ')
+  const categoryLabel = [
+    ...categories.map(c => c.name),
+    ...(tags ?? []).map(t => t.name),
+  ].join(' · ')
 
   return (
     <Link
@@ -48,7 +51,7 @@ export function MediaCard({ title, slug, coverImageKey, excerpt, publishedAt, ca
         ) : (
           <div
             className="absolute inset-0"
-            style={{ background: 'center/cover no-repeat', backgroundImage: "url('/gradient-placeholder.png')" }}
+            style={{ background: 'center/cover no-repeat', backgroundImage: `url('${placeholderGradient}')` }}
           />
         )}
       </div>

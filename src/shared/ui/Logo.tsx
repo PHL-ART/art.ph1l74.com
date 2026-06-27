@@ -1,14 +1,18 @@
-import Image from 'next/image'
 import Link from 'next/link'
 
 interface LogoProps {
-  variant?: 'white' | 'black'
   size?: number
   href?: string
 }
 
-export function Logo({ variant = 'white', size = 36, href = '/' }: LogoProps) {
-  const src = variant === 'white' ? '/logo-white.svg' : '/logo-black.svg'
-  const img = <Image src={src} alt="PHL·ART" width={size} height={size} priority />
-  return href ? <Link href={href}>{img}</Link> : img
+export function Logo({ size = 36, href = '/' }: LogoProps) {
+  const img = (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo-white.svg" alt="PHL·ART" width={size} height={size} className="logo-dark" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo-black.svg" alt="" width={size} height={size} aria-hidden className="logo-light" />
+    </>
+  )
+  return href ? <Link href={href} className="flex-shrink-0">{img}</Link> : <>{img}</>
 }

@@ -1,7 +1,7 @@
 import { prisma } from './prisma'
 import type { PostPreview } from '@/entities/post/types'
 
-export async function searchPosts(query: string): Promise<PostPreview[]> {
+export async function searchPosts(query: string): Promise<(PostPreview & { body: unknown })[]> {
   if (!query.trim()) return []
   return prisma.post.findMany({
     where: {
@@ -17,7 +17,9 @@ export async function searchPosts(query: string): Promise<PostPreview[]> {
       coverImageKey: true,
       publishedAt: true,
       isFeatured: true,
+      body: true,
       categories: { select: { id: true, name: true, slug: true } },
+      tags: { select: { id: true, name: true, slug: true } },
     },
   })
 }

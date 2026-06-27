@@ -3,13 +3,21 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import { getPostBySlug } from '@/entities/post/queries'
 import { BlockRenderer } from '@/entities/post/ui/BlockRenderer'
-import { ReadingProgress, SocialLinks, Tag } from '@/shared/ui'
+import { ReadingProgress, SocialLinks } from '@/shared/ui'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
+import type { Block, TextBlock } from '@/entities/post/types'
 
 export const revalidate = 300
 
 interface Props {
   params: { postSlug: string }
+}
+
+function estimateReadingTime(blocks: Block[]): number {
+  const words = blocks
+    .filter((b): b is TextBlock => b.type === 'text')
+    .reduce((acc, b) => acc + (b.html?.replace(/<[^>]+>/g, '').split(/\s+/).length ?? 0), 0)
+  return Math.max(1, Math.round(words / 220))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -28,80 +36,107 @@ export default async function PostPage({ params }: Props) {
   const post = await getPostBySlug(params.postSlug)
   if (!post) notFound()
 
+  const readingMinutes = estimateReadingTime(post.body)
+
   const date = post.publishedAt
-    ? new Intl.DateTimeFormat('ru', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }).format(new Date(post.publishedAt))
+    ? (() => {
+        const d = new Date(post.publishedAt)
+        const dm = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long' }).format(d)
+        return `${dm} ${d.getFullYear()}`
+      })()
     : null
+
+  const categoryTagLabel = [
+    ...post.categories.map(c => c.name),
+    ...post.tags.map(t => t.name),
+  ].join(' · ')
+
+  const metaLine = [
+    date,
+    `${readingMinutes} мин чтения`,
+    'текст и фото — PHL·ART',
+  ].filter(Boolean).join(' · ')
 
   return (
     <>
       <ReadingProgress />
 
       <article>
-        {/* Hero: cover image with dark gradient overlay */}
-        {post.coverImageKey && (
-          <div className="relative w-full aspect-[16/9] md:aspect-[21/9] overflow-hidden">
-            <Image
-              src={getPostUrl(post.coverImageKey)}
-              alt={post.title}
-              fill
-              priority
-              className="object-cover"
-              sizes="100vw"
-            />
-            {/* Dark gradient overlay — bottom-to-top fade to bg color */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-bg" />
-          </div>
-        )}
+        {/* ── Hero with gradient/cover ─────────────────── */}
+        <div
+          className="relative w-full overflow-hidden"
+          style={{ height: 'clamp(280px, 38vh, 460px)' }}
+        >
+          {post.coverImageKey ? (
+            <>
+              <Image
+                src={getPostUrl(post.coverImageKey)}
+                alt={post.title}
+                fill
+                priority
+                className="object-cover"
+                sizes="100vw"
+              />
+              <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-bg) 100%)' }}
+              />
+            </>
+          ) : (
+            <div
+              className="absolute inset-0"
+              style={{
+                background: 'radial-gradient(120% 90% at 12% 0%, #ff3b2f 0%, #b8201a 26%, #5c1512 55%, #1c0c0b 100%)',
+              }}
+            >
+              <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(to bottom, transparent 50%, var(--color-bg) 100%)' }}
+              />
+            </div>
+          )}
+        </div>
 
-        <div className="max-w-3xl mx-auto px-5 md:px-12 py-10 md:py-16">
-          {/* Post header */}
-          <header className="mb-10">
-            {/* Categories */}
-            {post.categories.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {post.categories.map(cat => (
-                  <Tag key={cat.id} href={`/${cat.slug}`}>
-                    {cat.name}
-                  </Tag>
-                ))}
+        {/* ── Post header ─────────────────────────────── */}
+        <div
+          className="mx-auto"
+          style={{ maxWidth: '740px', padding: '0 44px' }}
+        >
+          <header style={{ marginTop: '-32px', position: 'relative', zIndex: 1 }}>
+            {categoryTagLabel && (
+              <div
+                className="font-nav font-bold text-[12px] tracking-[0.12em] uppercase"
+                style={{ color: 'var(--color-accent)', marginBottom: '16px' }}
+              >
+                {categoryTagLabel}
               </div>
             )}
 
-            {/* Title — lowercase Manrope 700 */}
-            <h1 className="font-display font-bold text-text text-3xl md:text-[42px] lowercase tracking-tight leading-tight mb-4">
+            <h1
+              className="font-display font-bold lowercase"
+              style={{
+                fontSize: 'clamp(32px, 3.6vw, 54px)',
+                lineHeight: '1.0',
+                letterSpacing: '-0.015em',
+                color: 'var(--color-text)',
+                margin: '0 0 20px',
+              }}
+            >
               {post.title}
             </h1>
 
-            {/* Date + tags row */}
-            <div className="flex flex-wrap gap-4 items-center">
-              {date && (
-                <time
-                  dateTime={post.publishedAt ? new Date(post.publishedAt).toISOString() : undefined}
-                  className="font-body text-sm text-caption"
-                >
-                  {date}
-                </time>
-              )}
-              {post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {post.tags.map(tag => (
-                    <Tag key={tag.id} href={`/search?q=${encodeURIComponent(tag.name)}`}>
-                      {tag.name}
-                    </Tag>
-                  ))}
-                </div>
-              )}
+            <div
+              className="font-nav font-medium text-[12px] tracking-[0.06em] uppercase"
+              style={{ color: 'var(--color-caption)', marginBottom: '48px' }}
+            >
+              {metaLine}
             </div>
           </header>
 
-          {/* Body blocks */}
+          {/* ── Body content ──────────────────────────── */}
           <BlockRenderer blocks={post.body} />
 
-          {/* Social links at the end */}
+          {/* ── Social links ──────────────────────────── */}
           <SocialLinks links={post.socialLinks} />
         </div>
       </article>
