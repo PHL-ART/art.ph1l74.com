@@ -13,7 +13,8 @@ function extractLead(body: unknown): string | null {
   const b = body as { blocks?: { type: string; html?: string; isLead?: boolean }[] }
   if (!Array.isArray(b.blocks)) return null
   const lead = b.blocks.find(bl => bl.type === 'text' && bl.isLead)
-  return lead?.html ?? b.blocks.find(bl => bl.type === 'text')?.html ?? null
+  const raw = lead?.html ?? b.blocks.find(bl => bl.type === 'text')?.html ?? null
+  return raw ? raw.replace(/<[^>]+>/g, '') : null
 }
 
 export default async function HomePage() {

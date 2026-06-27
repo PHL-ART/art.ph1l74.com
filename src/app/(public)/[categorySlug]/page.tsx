@@ -19,7 +19,8 @@ function extractLead(body: unknown): string | null {
   const b = body as { blocks?: { type: string; html?: string; isLead?: boolean }[] }
   const blocks = Array.isArray(b) ? b : (b?.blocks ?? [])
   const lead = blocks.find(bl => bl.type === 'text' && bl.isLead)
-  return lead?.html ?? blocks.find(bl => bl.type === 'text')?.html ?? null
+  const raw = lead?.html ?? blocks.find(bl => bl.type === 'text')?.html ?? null
+  return raw ? raw.replace(/<[^>]+>/g, '') : null
 }
 
 export async function generateMetadata({
