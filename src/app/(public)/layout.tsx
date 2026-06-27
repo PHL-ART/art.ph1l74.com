@@ -7,7 +7,12 @@ export default async function PublicLayout({ children }: { children: React.React
   return (
     <>
       <Header categories={categories} />
-      <main className="min-h-screen">{children}</main>
+      <main
+        className="min-h-screen"
+        style={{ maxWidth: '1440px', margin: '0 auto' }}
+      >
+        {children}
+      </main>
       <Footer />
     </>
   )
