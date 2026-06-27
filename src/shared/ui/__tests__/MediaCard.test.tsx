@@ -25,7 +25,8 @@ describe('MediaCard', () => {
   })
   it('ссылка ведёт на /post/[slug]', () => {
     render(<MediaCard {...baseProps} />)
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/post/test-slug')
+    const postLink = screen.getByRole('link', { name: 'Тест заголовок' })
+    expect(postLink).toHaveAttribute('href', '/post/test-slug')
   })
   it('без обложки нет img', () => {
     render(<MediaCard {...baseProps} coverImageKey={null} />)
