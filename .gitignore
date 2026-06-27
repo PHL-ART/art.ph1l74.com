@@ -1,7 +1,10 @@
 /docs/refs/**
 /docs/specs/**
 .superpowers/
+node_modules/
+.next/
 
 
 .env
 CLAUDE.md
+/src/generated/prisma

@@ -1,0 +1,71 @@
+// This is your Prisma schema file
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+}
+
+model Post {
+  id            String       @id @default(cuid())
+  title         String
+  slug          String       @unique
+  body          Json
+  coverImageKey String?
+  isFeatured    Boolean      @default(false)
+  status        PostStatus   @default(DRAFT)
+  publishedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  categories    Category[]   @relation("PostCategories")
+  tags          Tag[]        @relation("PostTags")
+  socialLinks   SocialLink[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  gradientCss String?
+  order       Int      @default(0)
+  posts       Post[]   @relation("PostCategories")
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String
+  slug  String @unique
+  posts Post[] @relation("PostTags")
+}
+
+model Social {
+  id        String       @id @default(cuid())
+  name      String
+  slug      String       @unique
+  iconUrl   String?
+  createdAt DateTime     @default(now())
+  links     SocialLink[]
+}
+
+model SocialLink {
+  id        String   @id @default(cuid())
+  url       String
+  postId    String
+  socialId  String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  social    Social   @relation(fields: [socialId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([postId, socialId])
+}
