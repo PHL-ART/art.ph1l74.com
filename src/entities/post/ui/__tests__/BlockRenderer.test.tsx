@@ -15,7 +15,7 @@ describe('BlockRenderer', () => {
   it('рендерит quote с автором', () => {
     render(<BlockRenderer blocks={[{ type: 'quote', text: 'Цитата', author: 'Автор' }]} />)
     expect(screen.getByText('Цитата')).toBeInTheDocument()
-    expect(screen.getByText('Автор')).toBeInTheDocument()
+    expect(screen.getByText('— Автор')).toBeInTheDocument()
   })
   it('рендерит heading h2', () => {
     render(<BlockRenderer blocks={[{ type: 'heading', level: 2, text: 'Заголовок' }]} />)
