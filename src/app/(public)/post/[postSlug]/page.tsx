@@ -140,7 +140,7 @@ export default async function PostPage({ params }: Props) {
                   <Link
                     key={cat.id}
                     href={`/search?cat=${cat.slug}`}
-                    className="font-nav font-bold text-[12px] tracking-[0.12em] uppercase transition-opacity hover:opacity-70"
+                    className="chip-link font-nav font-bold text-[12px] tracking-[0.12em] uppercase"
                     style={{ color: 'var(--color-accent)' }}
                   >
                     {cat.name}
@@ -150,7 +150,7 @@ export default async function PostPage({ params }: Props) {
                   <Link
                     key={tag.id}
                     href={`/search?tag=${tag.slug}`}
-                    className="font-nav font-bold text-[12px] tracking-[0.12em] uppercase transition-opacity hover:opacity-70"
+                    className="chip-link font-nav font-bold text-[12px] tracking-[0.12em] uppercase"
                     style={{ color: 'var(--color-caption)' }}
                   >
                     {tag.name}
