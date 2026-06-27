@@ -33,13 +33,13 @@ model Post {
 }
 
 model Category {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
-  slug        String   @unique
+  slug        String  @unique
   description String?
   gradientCss String?
-  order       Int      @default(0)
-  posts       Post[]   @relation("PostCategories")
+  order       Int     @default(0)
+  posts       Post[]  @relation("PostCategories")
 }
 
 model Tag {
