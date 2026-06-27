@@ -41,10 +41,12 @@ export default async function HomePage() {
       {featured && (
         <section>
           <Link href={`/post/${featured.slug}`} className="group block" aria-label={featured.title}>
-
-            {/* ── Mobile hero: full-width cover with overlaid text ── */}
-            <div className="md:hidden relative overflow-hidden" style={{ minHeight: '480px' }}>
-              {/* Cover / gradient */}
+            {/* ── Full-width banner hero ── */}
+            <div
+              className="relative overflow-hidden"
+              style={{ minHeight: 'clamp(420px, 52vh, 580px)' }}
+            >
+              {/* Cover / gradient background */}
               {featured.coverImageKey ? (
                 <Image
                   src={getPostUrl(featured.coverImageKey)}
@@ -57,88 +59,70 @@ export default async function HomePage() {
               ) : (
                 <div className="absolute inset-0" style={{ background: HERO_GRADIENT }} />
               )}
+
               {/* Dark overlay for text legibility */}
               <div
                 className="absolute inset-0"
-                style={{ background: 'linear-gradient(to top, rgba(14,10,11,0.92) 45%, rgba(14,10,11,0.2) 100%)' }}
+                style={{
+                  background: 'linear-gradient(to top, rgba(14,10,11,0.92) 50%, rgba(14,10,11,0.25) 100%)',
+                }}
               />
-              {/* Text at bottom */}
-              <div className="absolute bottom-0 left-0 right-0" style={{ padding: '0 20px 28px' }}>
-                {heroLabel && (
-                  <div className="font-nav font-bold text-[11px] tracking-[0.12em] uppercase"
-                    style={{ color: 'var(--color-accent)', marginBottom: '10px' }}>
-                    {heroLabel}
-                  </div>
-                )}
-                <h1
-                  className="font-display font-bold lowercase"
-                  style={{ fontSize: '30px', lineHeight: '1.05', letterSpacing: '-0.01em', color: 'var(--color-text)', margin: '0 0 12px' }}
-                >
-                  {featured.title}
-                </h1>
-                {heroExcerpt && (
-                  <p className="font-body" style={{ fontWeight: 300, fontSize: '15px', lineHeight: '1.6', color: 'rgba(255,255,255,0.7)', marginBottom: '12px' }}>
-                    {heroExcerpt}
-                  </p>
-                )}
-                {featured.publishedAt && (
-                  <div className="font-nav font-medium text-[11px] tracking-[0.06em] uppercase"
-                    style={{ color: 'rgba(255,255,255,0.45)' }}>
-                    {formatDate(featured.publishedAt)}
-                  </div>
-                )}
-              </div>
-            </div>
 
-            {/* ── Desktop hero: 2-column grid ─────────────────────── */}
-            <div
-              className="hidden md:grid items-center"
-              style={{ padding: '56px 44px 52px', gridTemplateColumns: '1fr 1fr', gap: '44px' }}
-            >
-              {/* Left: editorial text */}
-              <div>
-                {heroLabel && (
-                  <div className="font-nav font-bold text-[12px] tracking-[0.12em] uppercase"
-                    style={{ color: 'var(--color-accent)', marginBottom: '22px' }}>
-                    {heroLabel}
-                  </div>
-                )}
-                <h1
-                  className="font-display font-bold lowercase"
-                  style={{ margin: 0, fontSize: 'clamp(40px, 4.2vw, 64px)', lineHeight: '1.0', letterSpacing: '-0.015em', color: 'var(--color-text)' }}
-                >
-                  {featured.title}
-                </h1>
-                {heroExcerpt && (
-                  <p className="font-body"
-                    style={{ marginTop: '22px', fontWeight: 300, fontSize: '17px', lineHeight: '1.65', color: 'var(--color-text-body)', maxWidth: '44ch' }}>
-                    {heroExcerpt}
-                  </p>
-                )}
-                {featured.publishedAt && (
-                  <div className="font-nav font-medium text-[12px] tracking-[0.07em] uppercase"
-                    style={{ marginTop: '26px', color: 'var(--color-caption)' }}>
-                    {formatDate(featured.publishedAt)}
-                  </div>
-                )}
+              {/* Logo centered */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-white.svg" alt="PHL·ART" width={42} height={42} className="logo-dark" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-black.svg" alt="" width={42} height={42} aria-hidden className="logo-light" />
               </div>
 
-              {/* Right: cover */}
+              {/* Text at bottom-left */}
               <div
-                className="relative overflow-hidden"
-                style={{ height: '420px', border: '1px solid rgba(255,255,255,0.14)' }}
+                className="absolute bottom-0 left-0 right-0"
+                style={{ padding: '0 44px 36px' }}
               >
-                {featured.coverImageKey ? (
-                  <Image
-                    src={getPostUrl(featured.coverImageKey)}
-                    alt={featured.title}
-                    fill
-                    priority
-                    className="object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
-                    sizes="50vw"
-                  />
-                ) : (
-                  <div className="absolute inset-0" style={{ background: HERO_GRADIENT }} />
+                {heroLabel && (
+                  <div
+                    className="font-nav font-bold text-[12px] tracking-[0.12em] uppercase"
+                    style={{ color: 'var(--color-accent)', marginBottom: '14px' }}
+                  >
+                    {heroLabel}
+                  </div>
+                )}
+                <h1
+                  className="font-display font-bold lowercase"
+                  style={{
+                    fontSize: 'clamp(30px, 3.8vw, 58px)',
+                    lineHeight: '1.0',
+                    letterSpacing: '-0.015em',
+                    color: 'var(--color-text)',
+                    margin: '0 0 14px',
+                  }}
+                >
+                  {featured.title}
+                </h1>
+                {heroExcerpt && (
+                  <p
+                    className="font-body hidden md:block"
+                    style={{
+                      fontWeight: 300,
+                      fontSize: '17px',
+                      lineHeight: '1.65',
+                      color: 'rgba(255,255,255,0.7)',
+                      marginBottom: '14px',
+                      maxWidth: '52ch',
+                    }}
+                  >
+                    {heroExcerpt}
+                  </p>
+                )}
+                {featured.publishedAt && (
+                  <div
+                    className="font-nav font-medium text-[11px] tracking-[0.06em] uppercase"
+                    style={{ color: 'rgba(255,255,255,0.45)' }}
+                  >
+                    {formatDate(featured.publishedAt)}
+                  </div>
                 )}
               </div>
             </div>
