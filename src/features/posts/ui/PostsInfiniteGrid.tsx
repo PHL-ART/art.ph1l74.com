@@ -28,7 +28,11 @@ export function PostsInfiniteGrid({ initialPosts, initialHasMore }: Props) {
     setIsLoading(true)
     try {
       const res = await fetch(`/api/posts?page=${page}&limit=12`)
-      if (!res.ok) return
+      if (!res.ok) {
+        console.error('[PostsInfiniteGrid] /api/posts returned', res.status)
+        setHasMore(false)
+        return
+      }
       const data: { posts: ApiPost[]; hasMore: boolean } = await res.json()
       // Convert publishedAt ISO strings back to Date objects for MediaCard
       const normalized: PostPreview[] = data.posts.map(p => ({
