@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.phlart.rule=Host(`art.ph1l74.com`)"
+      - "traefik.http.routers.phlart.entrypoints=websecure"
+      - "traefik.http.routers.phlart.tls.certresolver=letsencrypt"
+      - "traefik.http.services.phlart.loadbalancer.server.port=3000"
+
+networks:
+  default:
+    external: true
+    name: traefik
