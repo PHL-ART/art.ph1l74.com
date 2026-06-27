@@ -159,7 +159,7 @@ export default async function HomePage() {
               последние материалы
             </h2>
             <Link
-              href="/search"
+              href="/posts"
               className="font-nav font-semibold text-[13px] tracking-[0.06em] uppercase flex-shrink-0"
               style={{ color: 'var(--color-accent)', marginTop: '20px' }}
             >
