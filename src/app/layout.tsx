@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Manrope, Jost, Montserrat, Lora } from 'next/font/google'
 import '@/styles/globals.css'
+import { Analytics } from '@/shared/ui/Analytics'
 
 const manrope = Manrope({
   subsets: ['latin', 'cyrillic'],
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${manrope.variable} ${jost.variable} ${montserrat.variable} ${lora.variable}`}
       >
         {children}
+        <Analytics />
       </body>
     </html>
   )
