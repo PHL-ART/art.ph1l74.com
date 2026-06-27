@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import DOMPurify from 'isomorphic-dompurify'
-import { searchPosts } from '@/shared/lib/search'
+import { searchPosts, browsePosts } from '@/shared/lib/search'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
 import { CARD_GRADIENTS } from '@/shared/lib/gradients'
 
 interface Props {
-  searchParams: { q?: string; cat?: string }
+  searchParams: { q?: string; cat?: string; tag?: string }
 }
 
 function extractExcerpt(body: unknown): string | null {
@@ -31,7 +31,7 @@ function highlight(text: string, query: string): string {
   const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const marked = safe.replace(
     new RegExp(`(${escapeHtml(escapedQuery)})`, 'gi'),
-    '<mark style="background:none;color:var(--color-accent);font-weight:inherit">$1</mark>'
+    '<mark style="background:none;color:var(--color-accent);font-weight:inherit">$1</mark>',
   )
   return DOMPurify.sanitize(marked, { ALLOWED_TAGS: ['mark'], ALLOWED_ATTR: ['style'] })
 }
@@ -39,20 +39,33 @@ function highlight(text: string, query: string): string {
 export default async function SearchPage({ searchParams }: Props) {
   const query = searchParams.q?.trim() ?? ''
   const activeCat = searchParams.cat ?? ''
-  const allResults = query ? await searchPosts(query) : []
+  const activeTag = searchParams.tag ?? ''
 
-  // Build category counts for filter chips
-  const catCounts: Record<string, { name: string; slug: string; count: number }> = {}
-  for (const post of allResults) {
-    for (const cat of post.categories) {
-      if (!catCounts[cat.slug]) catCounts[cat.slug] = { name: cat.name, slug: cat.slug, count: 0 }
-      catCounts[cat.slug].count++
-    }
-  }
+  const isBrowseMode = !query && (activeCat || activeTag)
 
-  const results = activeCat
+  // Text search: fetch all, filter by cat locally (so we can show chip counts)
+  // Browse mode: fetch by cat/tag directly
+  const allResults = query
+    ? await searchPosts(query)
+    : isBrowseMode
+      ? await browsePosts({ cat: activeCat || undefined, tag: activeTag || undefined })
+      : []
+
+  // For text search: optionally filter by active category chip
+  const results = query && activeCat
     ? allResults.filter(p => p.categories.some(c => c.slug === activeCat))
     : allResults
+
+  // Category counts for filter chips (text search only)
+  const catCounts: Record<string, { name: string; slug: string; count: number }> = {}
+  if (query) {
+    for (const post of allResults) {
+      for (const cat of post.categories) {
+        if (!catCounts[cat.slug]) catCounts[cat.slug] = { name: cat.name, slug: cat.slug, count: 0 }
+        catCounts[cat.slug].count++
+      }
+    }
+  }
 
   const buildUrl = (cat: string) => {
     const params = new URLSearchParams()
@@ -61,41 +74,52 @@ export default async function SearchPage({ searchParams }: Props) {
     return `/search?${params.toString()}`
   }
 
+  // Heading for browse mode
+  const browseLabel = isBrowseMode
+    ? activeCat
+      ? `Категория: ${allResults[0]?.categories.find(c => c.slug === activeCat)?.name ?? activeCat}`
+      : `Тег: ${allResults[0]?.tags.find(t => t.slug === activeTag)?.name ?? activeTag}`
+    : null
+
+  const hasContent = query || isBrowseMode
+
   return (
     <div style={{ background: 'var(--color-bg)', padding: '52px 44px 80px', minHeight: '80vh' }}>
 
-      {/* ── Results header ──────────────────────────── */}
-      {query ? (
+      {hasContent ? (
         <>
           <div
             className="font-nav font-bold text-[11px] tracking-[0.14em] uppercase"
             style={{ color: 'var(--color-caption)', marginBottom: '12px' }}
           >
-            Результаты поиска
+            {isBrowseMode ? browseLabel : 'Результаты поиска'}
           </div>
 
-          <h1
-            className="font-display font-bold lowercase"
-            style={{
-              fontSize: 'clamp(36px, 4vw, 56px)',
-              lineHeight: '1.0',
-              letterSpacing: '-0.015em',
-              color: 'var(--color-text)',
-              margin: '0 0 12px',
-            }}
-          >
-            «{query}»
-          </h1>
+          {query && (
+            <h1
+              className="font-display font-bold lowercase"
+              style={{
+                fontSize: 'clamp(36px, 4vw, 56px)',
+                lineHeight: '1.0',
+                letterSpacing: '-0.015em',
+                color: 'var(--color-text)',
+                margin: '0 0 12px',
+              }}
+            >
+              «{query}»
+            </h1>
+          )}
 
           <p
             className="font-body"
             style={{ fontWeight: 300, fontSize: '15px', color: 'var(--color-caption)', marginBottom: '28px' }}
           >
-            найдено {allResults.length} {allResults.length === 1 ? 'материал' : allResults.length < 5 ? 'материала' : 'материалов'}
+            найдено {allResults.length}{' '}
+            {allResults.length === 1 ? 'материал' : allResults.length < 5 ? 'материала' : 'материалов'}
           </p>
 
-          {/* Filter chips */}
-          {Object.keys(catCounts).length > 0 && (
+          {/* Filter chips (text search only) */}
+          {query && Object.keys(catCounts).length > 0 && (
             <div className="flex flex-wrap gap-2" style={{ marginBottom: '36px' }}>
               <Link
                 href={buildUrl('')}
@@ -149,7 +173,6 @@ export default async function SearchPage({ searchParams }: Props) {
                       textDecoration: 'none',
                     }}
                   >
-                    {/* Cover */}
                     <div
                       className="relative flex-shrink-0 overflow-hidden"
                       style={{ width: '180px', height: '120px' }}
@@ -170,7 +193,6 @@ export default async function SearchPage({ searchParams }: Props) {
                       )}
                     </div>
 
-                    {/* Text */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       {tagLabel && (
                         <div
@@ -180,7 +202,6 @@ export default async function SearchPage({ searchParams }: Props) {
                           {tagLabel}
                         </div>
                       )}
-
                       <h2
                         className="font-display font-bold lowercase group-hover:opacity-80 transition-opacity"
                         style={{
@@ -192,7 +213,6 @@ export default async function SearchPage({ searchParams }: Props) {
                         }}
                         dangerouslySetInnerHTML={{ __html: highlight(post.title, query) }}
                       />
-
                       {excerpt && (
                         <p
                           className="font-body"
@@ -224,7 +244,6 @@ export default async function SearchPage({ searchParams }: Props) {
           )}
         </>
       ) : (
-        /* Empty state — no query */
         <div style={{ paddingTop: '80px', textAlign: 'center' }}>
           <p
             className="font-nav font-medium text-[13px] tracking-[0.06em] uppercase"

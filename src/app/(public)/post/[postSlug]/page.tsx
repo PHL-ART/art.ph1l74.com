@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Image from 'next/image'
+import Link from 'next/link'
 import { getPostBySlug } from '@/entities/post/queries'
 import { BlockRenderer } from '@/entities/post/ui/BlockRenderer'
 import { ReadingProgress, SocialLinks } from '@/shared/ui'
@@ -45,11 +46,6 @@ export default async function PostPage({ params }: Props) {
         return `${dm} ${d.getFullYear()}`
       })()
     : null
-
-  const categoryTagLabel = [
-    ...post.categories.map(c => c.name),
-    ...post.tags.map(t => t.name),
-  ].join(' · ')
 
   const metaLine = [
     date,
@@ -103,12 +99,28 @@ export default async function PostPage({ params }: Props) {
           style={{ maxWidth: '740px', padding: '0 44px' }}
         >
           <header style={{ marginTop: '-32px', position: 'relative', zIndex: 1 }}>
-            {categoryTagLabel && (
-              <div
-                className="font-nav font-bold text-[12px] tracking-[0.12em] uppercase"
-                style={{ color: 'var(--color-accent)', marginBottom: '16px' }}
-              >
-                {categoryTagLabel}
+            {(post.categories.length > 0 || post.tags.length > 0) && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1" style={{ marginBottom: '16px' }}>
+                {post.categories.map(cat => (
+                  <Link
+                    key={cat.id}
+                    href={`/search?cat=${cat.slug}`}
+                    className="font-nav font-bold text-[12px] tracking-[0.12em] uppercase transition-opacity hover:opacity-70"
+                    style={{ color: 'var(--color-accent)' }}
+                  >
+                    {cat.name}
+                  </Link>
+                ))}
+                {post.tags.map(tag => (
+                  <Link
+                    key={tag.id}
+                    href={`/search?tag=${tag.slug}`}
+                    className="font-nav font-bold text-[12px] tracking-[0.12em] uppercase transition-opacity hover:opacity-70"
+                    style={{ color: 'var(--color-caption)' }}
+                  >
+                    {tag.name}
+                  </Link>
+                ))}
               </div>
             )}
 
