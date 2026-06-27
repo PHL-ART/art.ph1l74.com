@@ -29,6 +29,11 @@ const lora = Lora({
 export const metadata: Metadata = {
   title: 'PHL·ART',
   description: 'Кураторская медиа-платформа',
+  icons: {
+    icon: '/logo-white.svg',
+    shortcut: '/logo-white.svg',
+    apple: '/logo-white.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
