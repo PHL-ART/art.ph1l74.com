@@ -52,3 +52,22 @@ body {
 .text-accent { color: var(--color-accent); }
 .bg-header { background-color: var(--color-bg-header); }
 .border-hairline { border-color: var(--color-hairline); }
+
+/* Chip link — left-to-right underline on hover */
+.chip-link {
+  position: relative;
+  text-decoration: none;
+}
+.chip-link::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.25s ease;
+}
+.chip-link:hover::after {
+  width: 100%;
+}
