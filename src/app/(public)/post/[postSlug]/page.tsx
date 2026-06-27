@@ -24,11 +24,46 @@ function estimateReadingTime(blocks: Block[]): number {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getPostBySlug(params.postSlug)
   if (!post) return {}
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+  const url = `${siteUrl}/post/${post.slug}`
+
+  // Extract lead text for description (strip HTML tags, truncate to 160 chars)
+  const lead = (() => {
+    const b = post.body as { blocks?: { type: string; html?: string; isLead?: boolean }[] }
+    const blocks = Array.isArray(b) ? b : (b?.blocks ?? [])
+    const leadBlock = blocks.find(bl => bl.type === 'text' && bl.isLead)
+    const firstText = leadBlock ?? blocks.find(bl => bl.type === 'text')
+    return firstText?.html?.replace(/<[^>]+>/g, '').slice(0, 160) ?? ''
+  })()
+
+  const categoryName = post.categories[0]?.name ?? ''
+
+  // Use cover image if available, otherwise generate branded OG image
+  const ogImage = post.coverImageKey
+    ? getPostUrl(post.coverImageKey)
+    : `${siteUrl}/api/og?title=${encodeURIComponent(post.title)}${
+        categoryName ? `&category=${encodeURIComponent(categoryName)}` : ''
+      }`
+
   return {
     title: `${post.title} — PHL·ART`,
+    description: lead,
+    alternates: { canonical: url },
     openGraph: {
+      type: 'article',
       title: post.title,
-      images: post.coverImageKey ? [getPostUrl(post.coverImageKey)] : [],
+      description: lead,
+      url,
+      siteName: 'PHL·ART',
+      images: [{ url: ogImage, width: 1200, height: 630 }],
+      ...(post.publishedAt && { publishedTime: post.publishedAt.toISOString() }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: lead,
+      images: [ogImage],
     },
   }
 }

@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getCategoryBySlug } from '@/entities/category/queries'
@@ -19,6 +20,30 @@ function extractLead(body: unknown): string | null {
   const blocks = Array.isArray(b) ? b : (b?.blocks ?? [])
   const lead = blocks.find(bl => bl.type === 'text' && bl.isLead)
   return lead?.html ?? blocks.find(bl => bl.type === 'text')?.html ?? null
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { categorySlug: string }
+}): Promise<Metadata> {
+  const category = await getCategoryBySlug(params.categorySlug)
+  if (!category) return {}
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+  const description = category.description ?? `Материалы раздела «${category.name}»`
+
+  return {
+    title: `${category.name} — PHL·ART`,
+    description,
+    alternates: { canonical: `${siteUrl}/${category.slug}` },
+    openGraph: {
+      title: `${category.name} — PHL·ART`,
+      description,
+      url: `${siteUrl}/${category.slug}`,
+      siteName: 'PHL·ART',
+    },
+  }
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
