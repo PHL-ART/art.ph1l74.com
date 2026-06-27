@@ -70,7 +70,6 @@ export function MediaCard({
               <Link
                 key={cat.id}
                 href={`/search?cat=${cat.slug}`}
-                onClick={e => e.stopPropagation()}
                 className="font-nav font-bold text-[11px] tracking-[0.10em] uppercase transition-opacity hover:opacity-70"
                 style={{ color: 'var(--color-accent)' }}
               >
@@ -87,7 +86,6 @@ export function MediaCard({
               <Link
                 key={tag.id}
                 href={`/search?tag=${tag.slug}`}
-                onClick={e => e.stopPropagation()}
                 className="font-nav font-bold text-[11px] tracking-[0.10em] uppercase transition-opacity hover:opacity-70"
                 style={{ color: 'var(--color-caption)' }}
               >
