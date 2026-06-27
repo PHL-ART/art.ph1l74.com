@@ -6,13 +6,17 @@ export default {
     extend: {
       colors: {
         bg:       'var(--color-bg)',
+        header:   'var(--color-bg-header)',
         footer:   'var(--color-bg-footer)',
         text:     'var(--color-text)',
         body:     'var(--color-text-body)',
+        muted:    'var(--color-text-muted)',
         caption:  'var(--color-caption)',
+        faint:    'var(--color-caption-faint)',
         accent:   'var(--color-accent)',
         hairline: 'var(--color-hairline)',
         glass:    'var(--color-glass)',
+        dot:      'var(--color-dot)',
       },
       fontFamily: {
         display:   ['var(--font-display)', 'sans-serif'],

@@ -6,5 +6,6 @@ node_modules/
 
 
 .env
+.env.local
 CLAUDE.md
 /src/generated/prisma

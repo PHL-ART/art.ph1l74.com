@@ -1,50 +1,97 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
-import { Tag } from './Tag'
 import { cn } from '@/shared/lib/cn'
 
 interface MediaCardProps {
   title: string
   slug: string
   coverImageKey?: string | null
+  excerpt?: string | null
   publishedAt: Date | null
   categories: { id: string; name: string; slug: string }[]
   className?: string
 }
 
-export function MediaCard({ title, slug, coverImageKey, publishedAt, categories, className }: MediaCardProps) {
+export function MediaCard({ title, slug, coverImageKey, excerpt, publishedAt, categories, className }: MediaCardProps) {
+  // Date formatted short: "24 июня · 6 мин"
   const date = publishedAt
-    ? new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(publishedAt))
+    ? new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long' }).format(new Date(publishedAt))
     : null
 
+  const categoryLabel = categories.map(c => c.name).join(' · ')
+
   return (
-    <Link href={`/post/${slug}`}
+    <Link
+      href={`/post/${slug}`}
       className={cn(
-        'group block relative overflow-hidden rounded-[2px]',
-        'border border-hairline bg-glass',
-        'transition-transform duration-200 ease-out',
-        'hover:-translate-y-[3px] hover:bg-[rgba(255,255,255,0.06)]',
-        'active:scale-[0.98]',
+        'group block overflow-hidden',
+        'border transition-transform duration-200 ease-out',
+        'hover:-translate-y-[3px] active:scale-[0.98]',
         className
       )}
+      style={{
+        borderColor: 'rgba(255,255,255,0.14)',
+        background: 'rgba(255,255,255,0.03)',
+      }}
     >
-      <div className="aspect-[4/3] relative overflow-hidden bg-glass">
+      {/* Cover */}
+      <div className="relative overflow-hidden" style={{ height: '188px' }}>
         {coverImageKey ? (
-          <Image src={getPostUrl(coverImageKey)} alt={title} fill className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
+          <Image
+            src={getPostUrl(coverImageKey)}
+            alt={title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[rgba(255,59,48,0.15)] to-transparent" />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'center/cover no-repeat', backgroundImage: "url('/gradient-placeholder.png')" }}
+          />
         )}
       </div>
-      <div className="p-[18px] flex flex-col gap-2">
-        {categories.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {categories.map(cat => <Tag key={cat.id}>{cat.name}</Tag>)}
+
+      {/* Content */}
+      <div className="flex flex-col gap-[11px]" style={{ padding: '18px 18px 22px' }}>
+        {/* Category label */}
+        {categoryLabel && (
+          <div
+            className="font-nav font-bold text-[11px] tracking-[0.10em] uppercase"
+            style={{ color: 'var(--color-accent)' }}
+          >
+            {categoryLabel}
           </div>
         )}
-        <h3 className="font-display font-bold text-text text-lg leading-tight lowercase tracking-tight">{title}</h3>
-        {date && <p className="font-body text-[13px] text-caption">{date}</p>}
+
+        {/* Title */}
+        <h3
+          className="font-display font-bold lowercase"
+          style={{ fontSize: '22px', lineHeight: '1.08', color: 'var(--color-text)' }}
+        >
+          {title}
+        </h3>
+
+        {/* Excerpt */}
+        {excerpt && (
+          <p
+            className="font-body"
+            style={{ fontWeight: 200, fontSize: '15px', lineHeight: '1.5', color: 'rgba(255,255,255,0.6)' }}
+          >
+            {excerpt}
+          </p>
+        )}
+
+        {/* Date */}
+        {date && (
+          <div
+            className="font-nav font-medium text-[11px] tracking-[0.06em] uppercase"
+            style={{ color: 'var(--color-caption-faint)', marginTop: '3px' }}
+          >
+            {date}
+          </div>
+        )}
       </div>
     </Link>
   )
