@@ -23,11 +23,12 @@ export async function getFeaturedPost(): Promise<(PostPreview & { body: unknown 
   })
 }
 
-export async function getRecentPosts(limit: number): Promise<PostPreview[]> {
+export async function getRecentPosts(limit: number, offset = 0): Promise<PostPreview[]> {
   return prisma.post.findMany({
     where: { status: 'PUBLISHED', isFeatured: false },
     orderBy: { publishedAt: 'desc' },
     take: limit,
+    skip: offset,
     select: postPreviewSelect,
   })
 }
