@@ -32,4 +32,19 @@ describe('MediaCard', () => {
     render(<MediaCard {...baseProps} coverImageKey={null} />)
     expect(screen.queryByRole('img')).toBeNull()
   })
+  it('теги рядом с датой — отдельные ссылки', () => {
+    render(
+      <MediaCard
+        {...baseProps}
+        tags={[{ id: 't1', name: 'Лонгрид', slug: 'longgrid' }]}
+      />,
+    )
+    // tag link exists
+    expect(screen.getByRole('link', { name: 'Лонгрид' })).toBeInTheDocument()
+    // tag link goes to /search?tag=longgrid
+    expect(screen.getByRole('link', { name: 'Лонгрид' })).toHaveAttribute(
+      'href',
+      '/search?tag=longgrid',
+    )
+  })
 })

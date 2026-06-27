@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
@@ -29,13 +30,14 @@ export function MediaCard({
   className,
 }: MediaCardProps) {
   const date = formatDate(publishedAt)
+  const tagList = tags ?? []
 
   return (
     <article
       className={cn(
-        'group relative overflow-hidden',
-        'border transition-transform duration-200 ease-out',
-        'hover:-translate-y-[3px] active:scale-[0.98]',
+        'group relative overflow-hidden cursor-pointer',
+        'border transition-all duration-200 ease-out',
+        'hover:-translate-y-[3px] hover:bg-white/[0.04] active:scale-[0.98]',
         className,
       )}
       style={{
@@ -43,11 +45,14 @@ export function MediaCard({
         background: 'rgba(255,255,255,0.03)',
       }}
     >
-      {/* Full-card stretched link at z-0 */}
-      <Link href={`/post/${slug}`} className="absolute inset-0 z-0" aria-label={title} />
+      {/* Stretched link — covers entire card at z-[1] */}
+      <Link href={`/post/${slug}`} className="absolute inset-0 z-[1]" aria-label={title} />
 
-      {/* Cover */}
-      <div className="relative overflow-hidden" style={{ height: '188px' }}>
+      {/* Cover — pointer-events-none: clicks fall through to stretched link */}
+      <div
+        className="relative overflow-hidden pointer-events-none"
+        style={{ height: '188px' }}
+      >
         {coverImageKey ? (
           <Image
             src={getPostUrl(coverImageKey)}
@@ -61,16 +66,19 @@ export function MediaCard({
         )}
       </div>
 
-      {/* Content — z-10 so inner links are above the stretched card link */}
-      <div className="relative z-10 flex flex-col gap-[9px]" style={{ padding: '18px 18px 22px' }}>
-        {/* Categories row */}
+      {/* Content — z-[2] pointer-events-none; interactive children override to auto */}
+      <div
+        className="relative z-[2] flex flex-col gap-[9px] pointer-events-none"
+        style={{ padding: '18px 18px 22px' }}
+      >
+        {/* Categories row — pointer-events-auto so they capture clicks */}
         {categories.length > 0 && (
-          <div className="flex flex-wrap gap-[8px]">
+          <div className="flex flex-wrap gap-[8px] pointer-events-auto">
             {categories.map(cat => (
               <Link
                 key={cat.id}
                 href={`/search?cat=${cat.slug}`}
-                className="font-nav font-bold text-[11px] tracking-[0.10em] uppercase transition-opacity hover:opacity-70"
+                className="chip-link font-nav font-bold text-[11px] tracking-[0.10em] uppercase"
                 style={{ color: 'var(--color-accent)' }}
               >
                 {cat.name}
@@ -79,23 +87,7 @@ export function MediaCard({
           </div>
         )}
 
-        {/* Tags row */}
-        {(tags ?? []).length > 0 && (
-          <div className="flex flex-wrap gap-[8px]">
-            {(tags ?? []).map(tag => (
-              <Link
-                key={tag.id}
-                href={`/search?tag=${tag.slug}`}
-                className="font-nav font-bold text-[11px] tracking-[0.10em] uppercase transition-opacity hover:opacity-70"
-                style={{ color: 'var(--color-caption)' }}
-              >
-                {tag.name}
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* Title */}
+        {/* Title — not a link; clicks fall through to stretched link */}
         <h3
           className="font-display font-bold lowercase"
           style={{ fontSize: '22px', lineHeight: '1.08', color: 'var(--color-text)' }}
@@ -113,13 +105,25 @@ export function MediaCard({
           </p>
         )}
 
-        {/* Date */}
-        {date && (
+        {/* Date + tags row — pointer-events-none on wrapper; tag links override to auto */}
+        {(date || tagList.length > 0) && (
           <div
-            className="font-nav font-medium text-[11px] tracking-[0.06em] uppercase"
+            className="font-nav font-medium text-[11px] tracking-[0.06em] uppercase flex flex-wrap items-center gap-[6px]"
             style={{ color: 'var(--color-caption-faint)', marginTop: '3px' }}
           >
-            {date}
+            {date && <span>{date}</span>}
+            {tagList.map((tag, i) => (
+              <Fragment key={tag.id}>
+                {(!!date || i > 0) && <span aria-hidden>·</span>}
+                <Link
+                  href={`/search?tag=${tag.slug}`}
+                  className="chip-link pointer-events-auto"
+                  style={{ color: 'var(--color-caption-faint)' }}
+                >
+                  {tag.name}
+                </Link>
+              </Fragment>
+            ))}
           </div>
         )}
       </div>
