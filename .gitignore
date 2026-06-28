@@ -5,6 +5,7 @@
 /docs/superpowers/**
 node_modules/
 .next/
+*.tsbuildinfo
 
 
 .env
