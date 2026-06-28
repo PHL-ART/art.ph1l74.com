@@ -94,7 +94,7 @@ export default async function HomePage() {
                       key={tag.id}
                       href={`/search?tag=${tag.slug}`}
                       className="chip-link font-nav font-bold text-[12px] tracking-[0.12em] uppercase"
-                      style={{ color: 'rgba(255,255,255,0.6)' }}
+                      style={{ color: 'var(--color-text-muted)' }}
                     >
                       {tag.name}
                     </Link>
