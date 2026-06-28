@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+
 import { useState } from 'react'
 import type { AdminPost } from '@/features/admin/types'
 import { deleteDraft } from '@/features/admin/actions/deleteDraft'
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function DraftsTable({ posts, selectedPostId, onSelectPost, onDeleted }: Props) {
-  const router = useRouter()
+  
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
