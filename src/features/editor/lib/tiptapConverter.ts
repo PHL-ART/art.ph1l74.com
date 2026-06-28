@@ -1,5 +1,5 @@
 export type Block =
-  | { type: 'text'; html: string; isLead?: boolean }
+  | { type: 'text'; html: string; isLead: boolean }
   | { type: 'heading'; level: 2 | 3; text: string }
   | { type: 'image'; key: string; alt?: string }
 
@@ -31,20 +31,24 @@ function inlineNodesToHtml(nodes: TiptapNode[]): string {
     .map(n => {
       if (n.type !== 'text') return ''
       let text = escapeHtml(n.text ?? '')
-      if (n.marks?.some(m => m.type === 'bold')) text = `<strong>${text}</strong>`
+      // Apply italic first, then bold — so the output is <strong><em>text</em></strong>
       if (n.marks?.some(m => m.type === 'italic')) text = `<em>${text}</em>`
+      if (n.marks?.some(m => m.type === 'bold')) text = `<strong>${text}</strong>`
       return text
     })
     .join('')
 }
 
+// Security note: blocksToHtml output is fed to TipTap's setContent() (admin-only editor).
+// TipTap/ProseMirror sanitises HTML through its schema before rendering.
+// block.html originates from tiptapJsonToBlocks, which only builds HTML from escaped text nodes.
 export function blocksToHtml(body: { blocks: Block[] }): string {
   const s3Base = process.env.NEXT_PUBLIC_S3_BASE_URL ?? ''
   return body.blocks
     .map(block => {
       if (block.type === 'text') {
         if (block.isLead) {
-          // Inject data-is-lead into the first opening tag
+          // Inject data-is-lead into the first opening standard HTML tag (e.g. <p>)
           return block.html.replace(/^<(\w+)/, '<$1 data-is-lead="true"')
         }
         return block.html
