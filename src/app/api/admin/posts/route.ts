@@ -3,6 +3,8 @@ import { NextRequest } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import { getCalendarPosts, getArchivePosts } from '@/features/admin/queries'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) {

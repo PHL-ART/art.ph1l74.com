@@ -22,7 +22,7 @@ export async function publishPost(
 
   try {
     const post = await prisma.post.update({
-      where: { id: postId },
+      where: { id: postId, status: { not: 'PUBLISHED' } },
       data: {
         status: 'PUBLISHED',
         publishedAt: new Date(),
