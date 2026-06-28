@@ -13,10 +13,11 @@ import { AdminAgenda } from './AdminAgenda'
 import { CrossPostingPanel } from './CrossPostingPanel'
 import { AdminArchive } from './AdminArchive'
 import { AdminBottomNav } from './AdminBottomNav'
+import { ArchiveView } from './ArchiveView'
 
 export function AdminDashboard() {
   const dispatch = useDispatch<AppDispatch>()
-  const { currentYear, currentMonth, selectedPostId, channelOverrides } = useSelector(
+  const { currentYear, currentMonth, selectedPostId, channelOverrides, currentView } = useSelector(
     (state: RootState) => state.admin
   )
 
@@ -77,26 +78,32 @@ export function AdminDashboard() {
         <AdminTopbar />
 
         {/* Desktop body */}
-        <div className="hidden lg:flex flex-col flex-1 gap-5 overflow-auto" style={{ padding: '24px 30px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 22, alignItems: 'start' }}>
-            <AdminCalendar
-              posts={calendarPosts}
-              year={currentYear}
-              month={currentMonth}
-              selectedPostId={selectedPostId}
-              onSelectPost={handleSelectPost}
-              onNavigate={handleNavigate}
-              isLoading={isLoading}
-            />
-            <CrossPostingPanel
-              post={selectedPost}
-              channels={channels}
-              onToggle={handleToggleChannel}
-              onPublish={handlePublish}
-              isPublishing={isPublishing}
-            />
-          </div>
-          <AdminArchive posts={archivePosts} />
+        <div className="hidden lg:flex flex-col flex-1 gap-5 overflow-auto">
+          {currentView === 'overview' ? (
+            <div style={{ padding: '24px 30px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 22, alignItems: 'start' }}>
+                <AdminCalendar
+                  posts={calendarPosts}
+                  year={currentYear}
+                  month={currentMonth}
+                  selectedPostId={selectedPostId}
+                  onSelectPost={handleSelectPost}
+                  onNavigate={handleNavigate}
+                  isLoading={isLoading}
+                />
+                <CrossPostingPanel
+                  post={selectedPost}
+                  channels={channels}
+                  onToggle={handleToggleChannel}
+                  onPublish={handlePublish}
+                  isPublishing={isPublishing}
+                />
+              </div>
+              <AdminArchive posts={archivePosts} />
+            </div>
+          ) : (
+            <ArchiveView selectedPostId={selectedPostId} onSelectPost={handleSelectPost} />
+          )}
         </div>
 
         {/* Mobile body */}

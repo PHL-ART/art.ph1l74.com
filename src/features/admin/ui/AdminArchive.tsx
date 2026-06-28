@@ -2,6 +2,8 @@ import type { AdminPost } from '@/features/admin/types'
 
 interface Props {
   posts: AdminPost[]
+  onSelectPost?: (id: string) => void
+  selectedPostId?: string | null
 }
 
 function CoverThumb({ post, size }: { post: AdminPost; size: number }) {
@@ -15,7 +17,7 @@ function CoverThumb({ post, size }: { post: AdminPost; size: number }) {
 const COL_TEMPLATE = '1fr 110px 130px 120px 90px'
 const HEADER_CELLS = ['материал', 'раздел', 'дата', 'каналы', 'охват']
 
-export function AdminArchive({ posts }: Props) {
+export function AdminArchive({ posts, onSelectPost, selectedPostId }: Props) {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-3">
@@ -30,8 +32,18 @@ export function AdminArchive({ posts }: Props) {
         </div>
         {posts.map(post => {
           const date = post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('ru', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
+          const isSelected = post.id === selectedPostId
           return (
-            <div key={post.id} style={{ display: 'grid', gridTemplateColumns: COL_TEMPLATE, gap: 16, padding: '13px 18px', borderTop: '1px solid rgba(255,255,255,0.07)', alignItems: 'center' }}>
+            <div
+              key={post.id}
+              onClick={() => onSelectPost?.(post.id)}
+              style={{
+                display: 'grid', gridTemplateColumns: COL_TEMPLATE, gap: 16, padding: '13px 18px',
+                borderTop: '1px solid rgba(255,255,255,0.07)', alignItems: 'center',
+                cursor: onSelectPost ? 'pointer' : undefined,
+                background: isSelected ? 'rgba(255,59,48,0.06)' : 'transparent',
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <CoverThumb post={post} size={38} />
                 <span className="font-display font-bold text-[14px]">{post.title}</span>
@@ -49,8 +61,18 @@ export function AdminArchive({ posts }: Props) {
       <div className="lg:hidden flex flex-col gap-2.5">
         {posts.map(post => {
           const date = post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('ru', { day: 'numeric', month: 'long' }) : '—'
+          const isSelectedMobile = post.id === selectedPostId
           return (
-            <div key={post.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '11px 13px' }}>
+            <div
+              key={post.id}
+              onClick={() => onSelectPost?.(post.id)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                background: isSelectedMobile ? 'rgba(255,59,48,0.06)' : 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.1)', padding: '11px 13px',
+                cursor: onSelectPost ? 'pointer' : undefined,
+              }}
+            >
               <CoverThumb post={post} size={44} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="font-display font-bold text-[14px]" style={{ lineHeight: 1.15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.title}</div>
