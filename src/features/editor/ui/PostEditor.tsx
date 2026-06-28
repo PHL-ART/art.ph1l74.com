@@ -5,6 +5,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import { Paragraph } from '@tiptap/extension-paragraph'
+import Placeholder from '@tiptap/extension-placeholder'
 import {
   blocksToHtml,
   tiptapJsonToBlocks,
@@ -84,6 +85,7 @@ export function PostEditor({ post, allCategories, allTags }: Props) {
       StarterKit.configure({ paragraph: false }),
       CustomParagraph,
       ImageWithKey,
+      Placeholder.configure({ placeholder: 'Начните писать...' }),
     ],
     content: blocksToHtml(post.body as { blocks: Block[] }),
     editorProps: {
@@ -101,20 +103,24 @@ export function PostEditor({ post, allCategories, allTags }: Props) {
     if (!editor) return
     setSaveStatus('saving')
     const body = tiptapJsonToBlocks(editor.getJSON() as unknown as TiptapDoc)
-    await saveDraft(post.id, {
+    const result = await saveDraft(post.id, {
       title,
       slug,
       body,
       categoryIds: selectedCategoryIds,
       tagIds: selectedTagIds,
     })
-    setSaveStatus('saved')
+    setSaveStatus(result.success ? 'saved' : 'unsaved')
   }, [editor, post.id, title, slug, selectedCategoryIds, selectedTagIds])
+
+  // Always points to the latest doSave so the onUpdate closure stays fresh
+  const doSaveRef = useRef(doSave)
+  useEffect(() => { doSaveRef.current = doSave }, [doSave])
 
   // Schedules an auto-save 30 s after the last change
   function scheduleAutoSave() {
     if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(doSave, 30_000)
+    saveTimer.current = setTimeout(() => doSaveRef.current(), 30_000)
   }
 
   // Cancel pending auto-save on unmount
