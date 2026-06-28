@@ -67,7 +67,7 @@ export function blocksToHtml(body: { blocks: Block[] }): string {
 }
 
 export function tiptapJsonToBlocks(doc: TiptapDoc): { blocks: Block[] } {
-  const blocks: Block[] = (doc.content ?? []).flatMap(node => {
+  const blocks: Block[] = (doc.content ?? []).flatMap((node): Block[] => {
     if (node.type === 'paragraph') {
       const isLead =
         node.attrs?.['data-is-lead'] === 'true' || node.attrs?.['data-is-lead'] === true
