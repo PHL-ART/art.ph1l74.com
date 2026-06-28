@@ -51,21 +51,25 @@ export function CrossPostingPanel({ post, channels, onToggle, onPublish, isPubli
           <div style={{ height: 140, backgroundSize: 'cover', backgroundPosition: 'center', backgroundImage: coverSrc ? `url(${coverSrc})` : undefined, background: coverSrc ? undefined : 'linear-gradient(135deg,#ff3b30,#7a1d18)', border: '1px solid rgba(255,255,255,0.14)', marginBottom: 14 }} />
           <div className="font-nav font-bold text-[10px] tracking-[0.1em] uppercase" style={{ color: '#ff5a4a', marginBottom: 6 }}>{post.categories.map(c => c.name).join(', ')} · {STATUS_LABEL[post.status] ?? post.status}</div>
           <div className="font-display font-bold text-[18px]" style={{ lineHeight: 1.1 }}>{post.title}</div>
-          <div className="font-nav font-bold text-[11px] tracking-[0.1em] uppercase" style={{ color: 'rgba(255,255,255,0.5)', margin: '22px 0 12px' }}>платформы публикации</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {CHANNELS.map(({ key, name, handle }) => {
-              const enabled = channels[key] ?? true
-              return (
-                <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.12)', padding: '13px 15px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                    <span className="font-nav font-bold text-[13px] tracking-[0.04em]">{name}</span>
-                    <span className="font-body font-light text-[13px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{handle}</span>
-                  </div>
-                  <Toggle on={enabled} onToggle={() => onToggle(key, !enabled)} />
-                </div>
-              )
-            })}
+          <div className="font-nav font-bold text-[11px] tracking-[0.1em] uppercase" style={{ color: 'rgba(255,255,255,0.5)', margin: '22px 0 12px' }}>
+            {isPublished ? 'опубликовано в каналы' : 'платформы публикации'}
           </div>
+          {!isPublished && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {CHANNELS.map(({ key, name, handle }) => {
+                const enabled = channels[key] ?? true
+                return (
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.12)', padding: '13px 15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                      <span className="font-nav font-bold text-[13px] tracking-[0.04em]">{name}</span>
+                      <span className="font-body font-light text-[13px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{handle}</span>
+                    </div>
+                    <Toggle on={enabled} onToggle={() => onToggle(key, !enabled)} />
+                  </div>
+                )
+              })}
+            </div>
+          )}
           <div className="font-nav font-bold text-[11px] tracking-[0.1em] uppercase" style={{ color: 'rgba(255,255,255,0.5)', margin: '22px 0 10px' }}>время выхода</div>
           <div className="font-body font-light text-[15px]" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.12)', padding: '13px 15px' }}>
             <span>{post.scheduledAt ? new Date(post.scheduledAt).toLocaleString('ru', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : '—'}</span>

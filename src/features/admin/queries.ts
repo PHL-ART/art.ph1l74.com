@@ -4,6 +4,7 @@ import type { AdminPost } from './types'
 const adminPostSelect = {
   id: true, title: true, slug: true, status: true,
   scheduledAt: true, publishedAt: true, coverImageKey: true,
+  viewCount: true,
   categories: { select: { name: true, slug: true } },
 } as const
 

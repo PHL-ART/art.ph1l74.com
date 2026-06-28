@@ -6,7 +6,7 @@ function makePost(overrides: Partial<AdminPost> = {}): AdminPost {
   return {
     id: 'p1', title: 'тест', slug: 'test', status: 'SCHEDULED',
     scheduledAt: '2026-06-15T12:00:00.000Z', publishedAt: null,
-    coverImageKey: null, categories: [],
+    coverImageKey: null, viewCount: 0, categories: [],
     ...overrides,
   }
 }

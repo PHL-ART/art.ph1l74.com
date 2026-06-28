@@ -41,7 +41,7 @@ export function AdminArchive({ posts }: Props) {
               <div style={{ display: 'flex', gap: 6 }}>
                 {(['VK', 'TG'] as const).map(ch => (<span key={ch} className="font-nav font-bold text-[10px]" style={{ color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.18)', padding: '3px 7px' }}>{ch}</span>))}
               </div>
-              <div className="font-display font-bold text-[14px]" style={{ textAlign: 'right', color: 'rgba(255,255,255,0.5)' }}>—</div>
+              <div className="font-display font-bold text-[14px]" style={{ textAlign: 'right', color: 'rgba(255,255,255,0.5)' }}>{post.viewCount.toLocaleString('ru')}</div>
             </div>
           )
         })}
@@ -60,7 +60,7 @@ export function AdminArchive({ posts }: Props) {
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
-                <span className="font-display font-bold text-[13px]" style={{ color: 'rgba(255,255,255,0.5)' }}>—</span>
+                <span className="font-display font-bold text-[13px]" style={{ color: 'rgba(255,255,255,0.5)' }}>{post.viewCount.toLocaleString('ru')}</span>
                 <div style={{ display: 'flex', gap: 4 }}>
                   {(['VK', 'TG'] as const).map(ch => (<span key={ch} className="font-nav font-bold text-[9px]" style={{ color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.18)', padding: '2px 6px' }}>{ch}</span>))}
                 </div>

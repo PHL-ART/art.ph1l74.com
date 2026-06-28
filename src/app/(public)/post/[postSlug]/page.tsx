@@ -7,6 +7,7 @@ import { BlockRenderer } from '@/entities/post/ui/BlockRenderer'
 import { ReadingProgress, SocialLinks } from '@/shared/ui'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
 import type { Block, TextBlock } from '@/entities/post/types'
+import { ViewCounter } from './ViewCounter'
 
 export const revalidate = 300
 
@@ -91,6 +92,7 @@ export default async function PostPage({ params }: Props) {
   return (
     <>
       <ReadingProgress />
+      <ViewCounter postSlug={params.postSlug} />
 
       <article>
         {/* ── Hero with gradient/cover ─────────────────── */}
