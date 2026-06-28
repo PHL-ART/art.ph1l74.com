@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { NextRequest } from 'next/server'
 import { authOptions } from '@/lib/auth'
-import { getCalendarPosts, getArchivePosts } from '@/features/admin/queries'
+import { getCalendarPosts, getArchivePosts, getAllPostsForArchive, type ArchiveFilters } from '@/features/admin/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +12,19 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url)
+  const mode = searchParams.get('mode')
+
+  if (mode === 'archive') {
+    const filters: ArchiveFilters = {
+      search: searchParams.get('search') ?? undefined,
+      status: searchParams.get('status') ?? undefined,
+      categorySlug: searchParams.get('category') ?? undefined,
+      tagSlug: searchParams.get('tag') ?? undefined,
+    }
+    const posts = await getAllPostsForArchive(filters)
+    return Response.json({ posts })
+  }
+
   const yearRaw = searchParams.get('year')
   const monthRaw = searchParams.get('month')
 

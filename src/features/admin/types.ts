@@ -9,5 +9,6 @@ export interface AdminPost {
   publishedAt: string | null   // ISO 8601
   coverImageKey: string | null
   viewCount: number
+  updatedAt: string | null      // ISO 8601
   categories: { name: string; slug: string }[]
 }
