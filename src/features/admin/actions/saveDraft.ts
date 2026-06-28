@@ -22,7 +22,7 @@ export async function saveDraft(
 
   try {
     await prisma.post.update({
-      where: { id: postId },
+      where: { id: postId, status: { not: 'PUBLISHED' } },
       data: {
         ...(data.title !== undefined && { title: data.title }),
         ...(data.slug !== undefined && { slug: data.slug }),
