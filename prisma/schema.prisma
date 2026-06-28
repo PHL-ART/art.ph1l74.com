@@ -16,6 +16,17 @@ enum PostStatus {
   PUBLISHED
 }
 
+enum SocialType {
+  CROSS_POSTING
+  AFTER_POSTING
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
 model Post {
   id            String       @id @default(cuid())
   title         String
@@ -28,6 +39,8 @@ model Post {
   scheduledAt   DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  viewCount     Int          @default(0)
+  mediaFiles    MediaFile[]  @relation("PostMedia")
   categories    Category[]   @relation("PostCategories")
   tags          Tag[]        @relation("PostTags")
   socialLinks   SocialLink[]
@@ -55,8 +68,20 @@ model Social {
   name      String
   slug      String       @unique
   iconUrl   String?
+  type      SocialType   @default(AFTER_POSTING)
+  apiToken  String?
   createdAt DateTime     @default(now())
   links     SocialLink[]
+}
+
+model MediaFile {
+  id         String     @id @default(cuid())
+  key        String     @unique
+  type       MediaType
+  filename   String
+  size       Int
+  uploadedAt DateTime   @default(now())
+  posts      Post[]     @relation("PostMedia")
 }
 
 model SocialLink {
