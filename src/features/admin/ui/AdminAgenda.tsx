@@ -1,3 +1,5 @@
+'use client'
+
 import type { AdminPost } from '@/features/admin/types'
 
 const STATUS_COLOR: Record<string, string> = {
