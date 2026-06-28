@@ -5,6 +5,7 @@ interface AdminState {
   currentMonth: number
   selectedPostId: string | null
   channelOverrides: Record<string, { vk?: boolean; tg?: boolean }>
+  currentView: 'overview' | 'archive'
 }
 
 const now = new Date()
@@ -14,6 +15,7 @@ const initialState: AdminState = {
   currentMonth: now.getMonth() + 1,
   selectedPostId: null,
   channelOverrides: {},
+  currentView: 'overview' as const,
 }
 
 export const adminSlice = createSlice({
@@ -32,8 +34,11 @@ export const adminSlice = createSlice({
       if (!state.channelOverrides[postId]) state.channelOverrides[postId] = {}
       state.channelOverrides[postId][channel] = enabled
     },
+    setCurrentView(state, action: PayloadAction<'overview' | 'archive'>) {
+      state.currentView = action.payload
+    },
   },
 })
 
-export const { setMonth, setSelectedPostId, setChannelOverride } = adminSlice.actions
+export const { setMonth, setSelectedPostId, setChannelOverride, setCurrentView } = adminSlice.actions
 export default adminSlice.reducer

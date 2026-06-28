@@ -2,16 +2,39 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useSelector, useDispatch } from 'react-redux'
+import type { RootState, AppDispatch } from '@/shared/store'
+import { setCurrentView } from '@/features/admin/model/adminSlice'
 
 export function AdminTopbar() {
+  const dispatch = useDispatch<AppDispatch>()
+  const currentView = useSelector((state: RootState) => state.admin.currentView)
+
   return (
     <>
       <div className="hidden lg:flex items-center justify-between px-8 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="flex items-center gap-6">
           <h1 className="font-display font-bold m-0" style={{ fontSize: 24, letterSpacing: '-0.01em' }}>Студия публикаций</h1>
           <div className="flex gap-1">
-            <span className="font-nav font-bold text-[11px] tracking-[0.06em] uppercase" style={{ padding: '7px 14px', background: 'rgba(255,255,255,0.08)', color: '#fff' }}>обзор</span>
-            <span className="font-nav font-bold text-[11px] tracking-[0.06em] uppercase" style={{ padding: '7px 14px', color: 'rgba(255,255,255,0.5)' }}>архив</span>
+            {(['overview', 'archive'] as const).map(view => {
+              const label = view === 'overview' ? 'обзор' : 'архив'
+              const active = currentView === view
+              return (
+                <button
+                  key={view}
+                  onClick={() => dispatch(setCurrentView(view))}
+                  className="font-nav font-bold text-[11px] tracking-[0.06em] uppercase"
+                  style={{
+                    padding: '7px 14px',
+                    background: active ? 'rgba(255,255,255,0.08)' : 'transparent',
+                    color: active ? '#fff' : 'rgba(255,255,255,0.5)',
+                    border: 'none', cursor: 'pointer',
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
         </div>
         <Link
@@ -42,8 +65,28 @@ export function AdminTopbar() {
         </Link>
       </div>
       <div className="flex lg:hidden gap-6 px-5 pt-3.5 font-nav font-bold text-[12px] tracking-[0.06em] uppercase">
-        <span className="pb-2.5" style={{ borderBottom: '2px solid #ff3b30' }}>обзор</span>
-        <span className="pb-2.5" style={{ color: 'rgba(255,255,255,0.45)' }}>архив</span>
+        {(['overview', 'archive'] as const).map(view => {
+          const label = view === 'overview' ? 'обзор' : 'архив'
+          const active = currentView === view
+          return (
+            <button
+              key={view}
+              onClick={() => dispatch(setCurrentView(view))}
+              className="pb-2.5 font-nav font-bold text-[12px] tracking-[0.06em] uppercase"
+              style={{
+                borderBottom: active ? '2px solid #ff3b30' : '2px solid transparent',
+                color: active ? '#fff' : 'rgba(255,255,255,0.45)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                borderBottomColor: active ? '#ff3b30' : 'transparent',
+                borderBottomWidth: '2px',
+                borderBottomStyle: 'solid',
+                paddingBottom: '10px',
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
       </div>
       <div className="lg:hidden h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
     </>
