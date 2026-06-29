@@ -78,6 +78,19 @@ export function PostEditor({ post, allCategories, allTags }: Props) {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
   const [publishError, setPublishError] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [channelMap, setChannelMap] = useState<Record<string, boolean>>({})
+
+  // Fetch CROSS_POSTING providers once on mount to build dynamic channel map
+  useEffect(() => {
+    fetch('/api/admin/services?type=CROSS_POSTING')
+      .then(r => r.json())
+      .then(data => {
+        const map: Record<string, boolean> = {}
+        for (const s of data.services ?? []) map[s.slug] = true
+        setChannelMap(map)
+      })
+      .catch(() => {})
+  }, [])
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -132,7 +145,7 @@ export function PostEditor({ post, allCategories, allTags }: Props) {
     setPublishError(null)
     // Save latest state first so the published snapshot is current
     await doSave()
-    const result = await publishPost(post.id, { vk: true, tg: true })
+    const result = await publishPost(post.id, channelMap)
     if (!result.success) setPublishError(result.error ?? 'Ошибка публикации')
   }
 
@@ -245,7 +258,8 @@ export function PostEditor({ post, allCategories, allTags }: Props) {
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={(key, src) => {
-          editor?.chain().focus().setImage({ src, 'data-key': key } as never).run()
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          editor?.chain().focus().setImage({ src, 'data-key': key } as any).run()
           setPickerOpen(false)
         }}
       />

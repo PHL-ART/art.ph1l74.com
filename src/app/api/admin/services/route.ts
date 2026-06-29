@@ -10,8 +10,16 @@ export async function GET(req: NextRequest) {
   if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   const type = new URL(req.url).searchParams.get('type')
-  const where = type ? { type: type as never } : {}
-  const services = await prisma.social.findMany({ where, orderBy: { createdAt: 'asc' } })
+  const VALID_SERVICE_TYPES = ['CROSS_POSTING', 'AFTER_POSTING'] as const
+  type ValidServiceType = typeof VALID_SERVICE_TYPES[number]
+  const where: { type?: ValidServiceType } = type && (VALID_SERVICE_TYPES as readonly string[]).includes(type)
+    ? { type: type as ValidServiceType }
+    : {}
+  const services = await prisma.social.findMany({
+    where,
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, name: true, slug: true, iconUrl: true, type: true, createdAt: true },
+  })
   return Response.json({ services })
 }
 

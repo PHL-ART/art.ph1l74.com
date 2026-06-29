@@ -21,6 +21,7 @@ const s3 = new S3Client({
 
 export async function uploadMedia(
   formData: FormData,
+  existingKey?: string,
 ): Promise<{ success: boolean; key?: string; error?: string }> {
   const session = await getServerSession(authOptions)
   if (!session) return { success: false, error: 'Unauthorized' }
@@ -29,9 +30,9 @@ export async function uploadMedia(
   if (!file) return { success: false, error: 'No file' }
 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
-  // Unique key: media/<timestamp>-<randomHex>.<ext>
+  // Reuse existing key when replacing, otherwise generate a new unique key
   const randomHex = Math.random().toString(36).slice(2)
-  const key = `media/${Date.now()}-${randomHex}.${ext}`
+  const key = existingKey ?? `media/${Date.now()}-${randomHex}.${ext}`
   const buffer = Buffer.from(await file.arrayBuffer())
 
   const type = file.type.startsWith('video/')
@@ -49,9 +50,17 @@ export async function uploadMedia(
     }),
   )
 
-  await prisma.mediaFile.create({
-    data: { key, type, filename: file.name, size: file.size },
-  })
+  if (existingKey) {
+    // Update existing DB record metadata — S3 object is overwritten in place
+    await prisma.mediaFile.update({
+      where: { key: existingKey },
+      data: { filename: file.name, size: file.size },
+    })
+  } else {
+    await prisma.mediaFile.create({
+      data: { key, type, filename: file.name, size: file.size },
+    })
+  }
 
   return { success: true, key }
 }

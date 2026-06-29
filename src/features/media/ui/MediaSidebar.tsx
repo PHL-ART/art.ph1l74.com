@@ -48,10 +48,10 @@ export function MediaSidebar({ file, onClose, onDeleted, onReplaced }: Props) {
     const f = e.target.files?.[0]
     if (!f) return
     setReplacing(true)
-    // Upload a new file to a new key; old file remains in S3 / DB
     const fd = new FormData()
     fd.append('file', f)
-    await uploadMedia(fd)
+    // Pass existing key so S3 object is overwritten in place and DB record is updated
+    await uploadMedia(fd, file!.key)
     setReplacing(false)
     onReplaced()
   }
