@@ -15,8 +15,12 @@ const s3 = new S3Client({
     accessKeyId: process.env.S3_ACCESS_KEY_ID!,
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
   },
-  // Required for non-AWS S3-compatible services
+  // Required for non-AWS S3-compatible services (firstvds etc.)
   forcePathStyle: true,
+  // Disable automatic checksum calculation — many S3-compatible services
+  // don't support it and reset the connection mid-upload
+  requestChecksumCalculation: 'WHEN_REQUIRED',
+  responseChecksumValidation: 'WHEN_REQUIRED',
 })
 
 export async function uploadMedia(
