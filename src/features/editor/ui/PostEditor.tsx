@@ -276,10 +276,9 @@ export function PostEditor({ post, allCategories: initCategories, allTags: initT
       <ImagePickerModal
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSelect={(key, src) => {
+        onInsert={(key, src) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           editor?.chain().focus().setImage({ src, 'data-key': key } as any).run()
-          setPickerOpen(false)
         }}
       />
     </div>
