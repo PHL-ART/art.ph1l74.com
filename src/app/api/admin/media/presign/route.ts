@@ -23,9 +23,19 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const ALLOWED_TYPES: Record<string, string> = {
+    'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png',
+    'image/webp': 'webp', 'image/gif': 'gif', 'image/tiff': 'tiff',
+    'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm',
+    'audio/mpeg': 'mp3', 'audio/mp4': 'm4a', 'audio/ogg': 'ogg', 'audio/wav': 'wav',
+  }
+
   const { filename, contentType, existingKey } = await req.json()
   if (!filename || !contentType) {
     return Response.json({ error: 'filename and contentType are required' }, { status: 400 })
+  }
+  if (!ALLOWED_TYPES[contentType]) {
+    return Response.json({ error: 'Unsupported content type' }, { status: 415 })
   }
 
   // If replacing an existing file, verify it belongs to a tracked MediaFile
@@ -34,7 +44,7 @@ export async function POST(req: NextRequest) {
     if (!owned) return Response.json({ error: 'Media file not found' }, { status: 404 })
   }
 
-  const ext = filename.split('.').pop()?.toLowerCase() ?? 'bin'
+  const ext = ALLOWED_TYPES[contentType]
   const key = existingKey ?? `media/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
   const command = new PutObjectCommand({
