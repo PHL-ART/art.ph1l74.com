@@ -1,34 +1,32 @@
 'use server'
 
 import { getServerSession } from 'next-auth'
+import { revalidatePath } from 'next/cache'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/shared/lib/prisma'
 
-interface DraftData {
+interface PostData {
   title?: string
   slug?: string
   body?: { blocks: unknown[] }
   categoryIds?: string[]
   tagIds?: string[]
-  coverImageKey?: string | null
-  scheduledAt?: string
   isFeatured?: boolean
 }
 
-export async function saveDraft(
+export async function updatePublished(
   postId: string,
-  data: DraftData,
+  data: PostData,
 ): Promise<{ success: boolean; error?: string }> {
   const session = await getServerSession(authOptions)
   if (!session) return { success: false, error: 'Unauthorized' }
 
   try {
-    // Separate status check to avoid Prisma 7 P2025 bug with compound WHERE + many-to-many set
     const existing = await prisma.post.findFirst({
-      where: { id: postId, status: { not: 'PUBLISHED' } },
-      select: { id: true },
+      where: { id: postId, status: 'PUBLISHED' },
+      select: { id: true, slug: true },
     })
-    if (!existing) return { success: false, error: 'Post not found or already published' }
+    if (!existing) return { success: false, error: 'Published post not found' }
 
     await prisma.post.update({
       where: { id: postId },
@@ -37,12 +35,7 @@ export async function saveDraft(
         ...(data.slug !== undefined && { slug: data.slug }),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(data.body !== undefined && { body: data.body as any }),
-        ...(data.coverImageKey !== undefined && { coverImageKey: data.coverImageKey }),
         ...(data.isFeatured !== undefined && { isFeatured: data.isFeatured }),
-        ...(data.scheduledAt !== undefined && {
-          scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
-          status: data.scheduledAt ? 'SCHEDULED' : 'DRAFT',
-        }),
         ...(data.categoryIds !== undefined && {
           categories: { set: data.categoryIds.map(id => ({ id })) },
         }),
@@ -51,9 +44,13 @@ export async function saveDraft(
         }),
       },
     })
+
+    revalidatePath('/')
+    revalidatePath(`/post/${existing.slug}`)
+
     return { success: true }
   } catch (err) {
-    console.error('[saveDraft]', err)
-    return { success: false, error: 'Failed to save draft' }
+    console.error('[updatePublished]', err)
+    return { success: false, error: 'Failed to update post' }
   }
 }

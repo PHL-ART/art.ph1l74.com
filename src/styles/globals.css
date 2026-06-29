@@ -84,5 +84,8 @@ body {
 .ProseMirror h3 { font-family: var(--font-manrope, sans-serif); font-size: 18px; font-weight: 700; margin: 1.2em 0 0.4em; }
 .ProseMirror blockquote { border-left: 3px solid #ff3b30; padding-left: 16px; color: rgba(255,255,255,0.6); margin: 1em 0; }
 .ProseMirror p[data-is-lead="true"] { font-family: var(--font-manrope, sans-serif); font-size: 22px; font-weight: 700; line-height: 1.3; }
-.ProseMirror img { max-width: 100%; height: auto; display: block; margin: 1.5em 0; }
+.ProseMirror img { max-width: 100%; height: auto; display: block; margin: 1.5em 0; transition: outline 0.1s, opacity 0.1s; }
+.ProseMirror img.ProseMirror-selectednode { outline: 2px solid #ff3b30; outline-offset: 2px; opacity: 0.88; }
+/* Image highlighted when inside a TextSelection range */
+.ProseMirror img.phl-image-in-selection { outline: 2px solid rgba(255,59,48,0.7); outline-offset: 2px; opacity: 0.82; }
 .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: rgba(255,255,255,0.25); pointer-events: none; float: left; height: 0; }

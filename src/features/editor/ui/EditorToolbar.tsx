@@ -62,11 +62,14 @@ export function EditorToolbar({ editor, onInsertImage }: Props) {
 
   return (
     <div
-      className="flex items-center gap-1 flex-wrap"
+      className="flex items-center justify-center gap-1 flex-wrap"
       style={{
         padding: '8px 16px',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
         background: '#0a0708',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
       }}
     >
       {actions.map(({ label, title, action, active }) => (

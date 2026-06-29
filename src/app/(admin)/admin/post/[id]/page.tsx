@@ -30,6 +30,7 @@ export default async function PostEditorPage({ params }: { params: { id: string 
         slug: post.slug,
         body: post.body as { blocks: unknown[] },
         status: post.status,
+        isFeatured: post.isFeatured,
         coverImageKey: post.coverImageKey,
         categories: post.categories,
         tags: post.tags,

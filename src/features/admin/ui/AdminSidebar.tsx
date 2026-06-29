@@ -56,11 +56,18 @@ export function AdminSidebar() {
   return (
     <div
       className="hidden lg:flex flex-col items-center flex-shrink-0 py-6 gap-1.5"
-      style={{ width: 72, background: '#0a0708', borderRight: '1px solid rgba(255,255,255,0.08)' }}
+      style={{
+        width: 72,
+        background: '#0a0708',
+        borderRight: '1px solid rgba(255,255,255,0.08)',
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        overflowY: 'auto',
+      }}
     >
       <Image src="/logo-white.svg" alt="PHL·ART" width={34} height={34} style={{ marginBottom: 18 }} />
       {NAV.map(({ href, label, icon }) => {
-        // The editor/pencil item should be active for any /admin/post/* route, not just /admin/post/new
         const isActive = href === '/admin/post/new'
           ? pathname.startsWith('/admin/post')
           : pathname.startsWith(href)
@@ -82,8 +89,6 @@ export function AdminSidebar() {
           </Link>
         )
       })}
-      {/* Avatar placeholder — bottom of sidebar */}
-      <div style={{ marginTop: 'auto', width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#ff3b30,#7a1d18)' }} />
     </div>
   )
 }
