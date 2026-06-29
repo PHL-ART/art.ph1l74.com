@@ -29,6 +29,12 @@ export async function uploadMedia(
   const file = formData.get('file') as File | null
   if (!file) return { success: false, error: 'No file' }
 
+  // Verify existingKey belongs to a tracked MediaFile before allowing overwrite
+  if (existingKey) {
+    const owned = await prisma.mediaFile.findUnique({ where: { key: existingKey }, select: { id: true } })
+    if (!owned) return { success: false, error: 'Media file not found' }
+  }
+
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
   // Reuse existing key when replacing, otherwise generate a new unique key
   const randomHex = Math.random().toString(36).slice(2)
