@@ -17,6 +17,7 @@ import { publishPost } from '@/features/admin/actions/publishPost'
 import { AdminSidebar } from '@/features/admin/ui/AdminSidebar'
 import { EditorToolbar } from './EditorToolbar'
 import { MetadataPanel } from './MetadataPanel'
+import { ImagePickerModal } from './ImagePickerModal'
 
 interface PostData {
   id: string
@@ -76,6 +77,7 @@ export function PostEditor({ post, allCategories, allTags }: Props) {
   const [selectedTagIds, setSelectedTagIds] = useState(post.tags.map(t => t.id))
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
   const [publishError, setPublishError] = useState<string | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -214,7 +216,7 @@ export function PostEditor({ post, allCategories, allTags }: Props) {
           {/* Main editor area */}
           <div className="flex flex-col flex-1 min-w-0 overflow-auto">
             {/* Formatting toolbar */}
-            <EditorToolbar editor={editor} onInsertImage={() => {}} />
+            <EditorToolbar editor={editor} onInsertImage={() => setPickerOpen(true)} />
 
             <div
               style={{ padding: '32px 48px', maxWidth: 800, margin: '0 auto', width: '100%' }}
@@ -238,6 +240,15 @@ export function PostEditor({ post, allCategories, allTags }: Props) {
           />
         </div>
       </div>
+
+      <ImagePickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(key, src) => {
+          editor?.chain().focus().setImage({ src, 'data-key': key } as never).run()
+          setPickerOpen(false)
+        }}
+      />
     </div>
   )
 }
