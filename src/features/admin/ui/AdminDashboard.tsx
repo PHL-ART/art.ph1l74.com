@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '@/shared/store'
 import { setMonth, setSelectedPostId, setChannelOverride } from '@/features/admin/model/adminSlice'
@@ -14,8 +15,10 @@ import { CrossPostingPanel } from './CrossPostingPanel'
 import { AdminArchive } from './AdminArchive'
 import { AdminBottomNav } from './AdminBottomNav'
 import { ArchiveView } from './ArchiveView'
+import { DraftsTable } from './DraftsTable'
 
 export function AdminDashboard() {
+  const router = useRouter()
   const dispatch = useDispatch<AppDispatch>()
   const { currentYear, currentMonth, selectedPostId, channelOverrides, currentView } = useSelector(
     (state: RootState) => state.admin
@@ -23,6 +26,7 @@ export function AdminDashboard() {
 
   const [calendarPosts, setCalendarPosts] = useState<AdminPost[]>([])
   const [archivePosts, setArchivePosts] = useState<AdminPost[]>([])
+  const [draftPosts, setDraftPosts] = useState<AdminPost[]>([])
   const [crossProviders, setCrossProviders] = useState<{ id: string; name: string; slug: string }[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -39,6 +43,13 @@ export function AdminDashboard() {
       .finally(() => setIsLoading(false))
   }, [currentYear, currentMonth])
 
+  const fetchDrafts = useCallback(async () => {
+    const data = await fetch('/api/admin/posts?mode=archive&status=DRAFT').then(r => r.json())
+    setDraftPosts(data.posts ?? [])
+  }, [])
+
+  useEffect(() => { fetchDrafts() }, [fetchDrafts])
+
   useEffect(() => {
     fetch('/api/admin/services?type=CROSS_POSTING')
       .then(r => r.json())
@@ -52,7 +63,6 @@ export function AdminDashboard() {
   async function handlePublish() {
     if (!selectedPostId) return
     setIsPublishing(true)
-    // Build per-slug enabled map, defaulting to true for any provider not explicitly toggled
     const channelMap = Object.fromEntries(
       crossProviders.map(p => [p.slug, channels[p.slug] ?? true])
     )
@@ -61,6 +71,7 @@ export function AdminDashboard() {
       const data = await fetch(`/api/admin/posts?year=${currentYear}&month=${currentMonth}`).then(r => r.json())
       setCalendarPosts(data.calendarPosts ?? [])
       setArchivePosts(data.archivePosts ?? [])
+      fetchDrafts()
     }
     setIsPublishing(false)
   }
@@ -90,6 +101,7 @@ export function AdminDashboard() {
         <div className="hidden lg:flex flex-col flex-1 gap-5 overflow-auto">
           {currentView === 'overview' ? (
             <div style={{ padding: '24px 30px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+              {/* Calendar + cross-posting panel */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 22, alignItems: 'start' }}>
                 <AdminCalendar
                   posts={calendarPosts}
@@ -109,7 +121,20 @@ export function AdminDashboard() {
                   isPublishing={isPublishing}
                 />
               </div>
-              <AdminArchive posts={archivePosts} />
+
+              {/* Drafts + Archive — equal-width two columns */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22, alignItems: 'start' }}>
+                <DraftsTable
+                  posts={draftPosts}
+                  selectedPostId={selectedPostId}
+                  onSelectPost={id => router.push(`/admin/post/${id}`)}
+                  onDeleted={fetchDrafts}
+                />
+                <AdminArchive
+                  posts={archivePosts}
+                  onSelectPost={id => router.push(`/admin/post/${id}`)}
+                />
+              </div>
             </div>
           ) : (
             <ArchiveView selectedPostId={selectedPostId} onSelectPost={handleSelectPost} />
@@ -140,7 +165,16 @@ export function AdminDashboard() {
             onPublish={handlePublish}
             isPublishing={isPublishing}
           />
-          <AdminArchive posts={archivePosts} />
+          <DraftsTable
+            posts={draftPosts}
+            selectedPostId={selectedPostId}
+            onSelectPost={id => router.push(`/admin/post/${id}`)}
+            onDeleted={fetchDrafts}
+          />
+          <AdminArchive
+            posts={archivePosts}
+            onSelectPost={id => router.push(`/admin/post/${id}`)}
+          />
         </div>
 
         <AdminBottomNav />

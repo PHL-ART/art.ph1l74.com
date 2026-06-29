@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { AdminPost } from '@/features/admin/types'
-import { DraftsTable } from './DraftsTable'
+import { deletePost } from '@/features/admin/actions/deletePost'
 import { AdminArchive } from './AdminArchive'
 import { PostSettingsPanel } from './PostSettingsPanel'
 
@@ -12,13 +13,14 @@ interface Props {
 }
 
 export function ArchiveView({ selectedPostId, onSelectPost }: Props) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [posts, setPosts] = useState<AdminPost[]>([])
   const [loading, setLoading] = useState(false)
 
   const fetchPosts = useCallback(async (q: string) => {
     setLoading(true)
-    const params = new URLSearchParams({ mode: 'archive', ...(q ? { search: q } : {}) })
+    const params = new URLSearchParams({ mode: 'archive', status: 'PUBLISHED', ...(q ? { search: q } : {}) })
     const data = await fetch(`/api/admin/posts?${params}`).then(r => r.json())
     setPosts(data.posts ?? [])
     setLoading(false)
@@ -33,15 +35,17 @@ export function ArchiveView({ selectedPostId, onSelectPost }: Props) {
     return () => clearTimeout(t)
   }, [search, fetchPosts])
 
-  const drafts = posts.filter(p => p.status !== 'PUBLISHED')
-  const published = posts.filter(p => p.status === 'PUBLISHED')
   const selectedPost = posts.find(p => p.id === selectedPostId) ?? null
+
+  async function handleDelete(id: string) {
+    const result = await deletePost(id)
+    if (result.success) fetchPosts(search)
+  }
 
   return (
     <div style={{ padding: '24px 30px', display: 'grid', gridTemplateColumns: '1fr 300px', gap: 22, alignItems: 'start' }}>
-      {/* Left column: search + drafts/archive */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-        {/* Search */}
+      {/* Left column: search + archive table */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -58,27 +62,22 @@ export function ArchiveView({ selectedPostId, onSelectPost }: Props) {
           }}
         />
 
-        {/* Two-column layout: drafts left, published archive right */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22, alignItems: 'start' }}>
-          <DraftsTable
-            posts={drafts}
-            selectedPostId={selectedPostId}
-            onSelectPost={onSelectPost}
-            onDeleted={() => fetchPosts(search)}
-          />
-          <div>
-            <AdminArchive posts={published} onSelectPost={onSelectPost} selectedPostId={selectedPostId} />
-          </div>
-        </div>
-
-        {loading && (
+        {loading ? (
           <div className="font-body font-light text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
             Загрузка...
           </div>
+        ) : (
+          <AdminArchive
+            posts={posts}
+            hideTitle
+            onSelectPost={onSelectPost}
+            selectedPostId={selectedPostId}
+            onDelete={handleDelete}
+          />
         )}
       </div>
 
-      {/* Right column: post settings */}
+      {/* Right column: post settings sidebar */}
       <PostSettingsPanel post={selectedPost} />
     </div>
   )
