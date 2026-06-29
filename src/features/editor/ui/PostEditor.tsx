@@ -14,6 +14,9 @@ import {
 } from '@/features/editor/lib/tiptapConverter'
 import { saveDraft } from '@/features/admin/actions/saveDraft'
 import { publishPost } from '@/features/admin/actions/publishPost'
+import { createCategory } from '@/features/admin/actions/createCategory'
+import { createTag } from '@/features/admin/actions/createTag'
+import type { ComboboxOption } from './ComboboxSelect'
 import { AdminSidebar } from '@/features/admin/ui/AdminSidebar'
 import { EditorToolbar } from './EditorToolbar'
 import { MetadataPanel } from './MetadataPanel'
@@ -70,11 +73,13 @@ function slugify(str: string): string {
     .trim()
 }
 
-export function PostEditor({ post, allCategories, allTags }: Props) {
+export function PostEditor({ post, allCategories: initCategories, allTags: initTags }: Props) {
   const [title, setTitle] = useState(post.title)
   const [slug, setSlug] = useState(post.slug)
   const [selectedCategoryIds, setSelectedCategoryIds] = useState(post.categories.map(c => c.id))
   const [selectedTagIds, setSelectedTagIds] = useState(post.tags.map(t => t.id))
+  const [allCategories, setAllCategories] = useState<ComboboxOption[]>(initCategories)
+  const [allTags, setAllTags] = useState<ComboboxOption[]>(initTags)
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
   const [publishError, setPublishError] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -157,16 +162,28 @@ export function PostEditor({ post, allCategories, allTags }: Props) {
     scheduleAutoSave()
   }
 
-  function handleCategoryToggle(id: string) {
-    setSelectedCategoryIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]))
+  function handleCategoryChange(ids: string[]) {
+    setSelectedCategoryIds(ids)
     setSaveStatus('unsaved')
     scheduleAutoSave()
   }
 
-  function handleTagToggle(id: string) {
-    setSelectedTagIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]))
+  function handleTagChange(ids: string[]) {
+    setSelectedTagIds(ids)
     setSaveStatus('unsaved')
     scheduleAutoSave()
+  }
+
+  async function handleCreateCategory(name: string): Promise<ComboboxOption> {
+    const created = await createCategory(name)
+    setAllCategories(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name, 'ru')))
+    return created
+  }
+
+  async function handleCreateTag(name: string): Promise<ComboboxOption> {
+    const created = await createTag(name)
+    setAllTags(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name, 'ru')))
+    return created
   }
 
   return (
@@ -248,8 +265,10 @@ export function PostEditor({ post, allCategories, allTags }: Props) {
             allTags={allTags}
             onTitleChange={handleTitleChange}
             onSlugChange={setSlug}
-            onCategoryToggle={handleCategoryToggle}
-            onTagToggle={handleTagToggle}
+            onCategoryChange={handleCategoryChange}
+            onTagChange={handleTagChange}
+            onCreateCategory={handleCreateCategory}
+            onCreateTag={handleCreateTag}
           />
         </div>
       </div>

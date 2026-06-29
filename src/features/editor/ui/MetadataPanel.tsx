@@ -1,26 +1,20 @@
 'use client'
 
-interface Category {
-  id: string
-  name: string
-}
-
-interface Tag {
-  id: string
-  name: string
-}
+import { ComboboxSelect, type ComboboxOption } from './ComboboxSelect'
 
 interface Props {
   title: string
   slug: string
   selectedCategoryIds: string[]
   selectedTagIds: string[]
-  allCategories: Category[]
-  allTags: Tag[]
+  allCategories: ComboboxOption[]
+  allTags: ComboboxOption[]
   onTitleChange: (v: string) => void
   onSlugChange: (v: string) => void
-  onCategoryToggle: (id: string) => void
-  onTagToggle: (id: string) => void
+  onCategoryChange: (ids: string[]) => void
+  onTagChange: (ids: string[]) => void
+  onCreateCategory: (name: string) => Promise<ComboboxOption>
+  onCreateTag: (name: string) => Promise<ComboboxOption>
 }
 
 const FIELD_STYLE: React.CSSProperties = {
@@ -50,8 +44,10 @@ export function MetadataPanel({
   allTags,
   onTitleChange,
   onSlugChange,
-  onCategoryToggle,
-  onTagToggle,
+  onCategoryChange,
+  onTagChange,
+  onCreateCategory,
+  onCreateTag,
 }: Props) {
   return (
     <div
@@ -68,9 +64,7 @@ export function MetadataPanel({
       }}
     >
       <div>
-        <span className={LABEL} style={LABEL_COLOR}>
-          Заголовок
-        </span>
+        <span className={LABEL} style={LABEL_COLOR}>Заголовок</span>
         <input
           value={title}
           onChange={e => onTitleChange(e.target.value)}
@@ -81,9 +75,7 @@ export function MetadataPanel({
       </div>
 
       <div>
-        <span className={LABEL} style={LABEL_COLOR}>
-          Slug
-        </span>
+        <span className={LABEL} style={LABEL_COLOR}>Slug</span>
         <input
           value={slug}
           onChange={e => onSlugChange(e.target.value)}
@@ -93,57 +85,25 @@ export function MetadataPanel({
       </div>
 
       <div>
-        <span className={LABEL} style={LABEL_COLOR}>
-          Категории
-        </span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {allCategories.map(cat => {
-            const active = selectedCategoryIds.includes(cat.id)
-            return (
-              <button
-                key={cat.id}
-                onClick={() => onCategoryToggle(cat.id)}
-                className="font-nav font-bold text-[11px] tracking-[0.05em] uppercase text-left"
-                style={{
-                  padding: '7px 12px',
-                  background: active ? 'rgba(255,59,48,0.14)' : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${active ? 'rgba(255,59,48,0.4)' : 'rgba(255,255,255,0.1)'}`,
-                  color: active ? '#ff5a4a' : 'rgba(255,255,255,0.7)',
-                  cursor: 'pointer',
-                }}
-              >
-                {cat.name}
-              </button>
-            )
-          })}
-        </div>
+        <span className={LABEL} style={LABEL_COLOR}>Категории</span>
+        <ComboboxSelect
+          value={selectedCategoryIds}
+          onChange={onCategoryChange}
+          options={allCategories}
+          onCreateNew={onCreateCategory}
+          placeholder="Поиск или создать категорию..."
+        />
       </div>
 
       <div>
-        <span className={LABEL} style={LABEL_COLOR}>
-          Теги
-        </span>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {allTags.map(tag => {
-            const active = selectedTagIds.includes(tag.id)
-            return (
-              <button
-                key={tag.id}
-                onClick={() => onTagToggle(tag.id)}
-                className="font-nav font-bold text-[10px] tracking-[0.05em] uppercase"
-                style={{
-                  padding: '4px 9px',
-                  background: active ? 'rgba(255,59,48,0.14)' : 'transparent',
-                  border: `1px solid ${active ? 'rgba(255,59,48,0.4)' : 'rgba(255,255,255,0.15)'}`,
-                  color: active ? '#ff5a4a' : 'rgba(255,255,255,0.55)',
-                  cursor: 'pointer',
-                }}
-              >
-                {tag.name}
-              </button>
-            )
-          })}
-        </div>
+        <span className={LABEL} style={LABEL_COLOR}>Теги</span>
+        <ComboboxSelect
+          value={selectedTagIds}
+          onChange={onTagChange}
+          options={allTags}
+          onCreateNew={onCreateTag}
+          placeholder="Поиск или создать тег..."
+        />
       </div>
     </div>
   )
