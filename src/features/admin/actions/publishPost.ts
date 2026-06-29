@@ -7,15 +7,15 @@ import { prisma } from '@/shared/lib/prisma'
 
 async function crossPostToChannels(
   postId: string,
-  channels: { vk: boolean; tg: boolean }
+  channels: Record<string, boolean>
 ): Promise<void> {
-  // Future: dispatch to registered cross-posting providers
+  // Future: dispatch to registered cross-posting providers by slug
   console.log('[crosspost] postId=%s channels=%j', postId, channels)
 }
 
 export async function publishPost(
   postId: string,
-  channels: { vk: boolean; tg: boolean }
+  channels: Record<string, boolean>
 ): Promise<{ success: boolean; error?: string }> {
   const session = await getServerSession(authOptions)
   if (!session) return { success: false, error: 'Unauthorized' }

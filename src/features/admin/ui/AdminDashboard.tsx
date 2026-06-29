@@ -23,6 +23,7 @@ export function AdminDashboard() {
 
   const [calendarPosts, setCalendarPosts] = useState<AdminPost[]>([])
   const [archivePosts, setArchivePosts] = useState<AdminPost[]>([])
+  const [crossProviders, setCrossProviders] = useState<{ id: string; name: string; slug: string }[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
 
@@ -38,16 +39,24 @@ export function AdminDashboard() {
       .finally(() => setIsLoading(false))
   }, [currentYear, currentMonth])
 
+  useEffect(() => {
+    fetch('/api/admin/services?type=CROSS_POSTING')
+      .then(r => r.json())
+      .then(d => setCrossProviders(d.services ?? []))
+      .catch(console.error)
+  }, [])
+
   const selectedPost = calendarPosts.find(p => p.id === selectedPostId) ?? null
-  const channels = channelOverrides[selectedPostId ?? ''] ?? { vk: true, tg: true }
+  const channels: Record<string, boolean> = channelOverrides[selectedPostId ?? ''] ?? {}
 
   async function handlePublish() {
     if (!selectedPostId) return
     setIsPublishing(true)
-    const result = await publishPost(selectedPostId, {
-      vk: channels.vk ?? true,
-      tg: channels.tg ?? true,
-    })
+    // Build per-slug enabled map, defaulting to true for any provider not explicitly toggled
+    const channelMap = Object.fromEntries(
+      crossProviders.map(p => [p.slug, channels[p.slug] ?? true])
+    )
+    const result = await publishPost(selectedPostId, channelMap)
     if (result.success) {
       const data = await fetch(`/api/admin/posts?year=${currentYear}&month=${currentMonth}`).then(r => r.json())
       setCalendarPosts(data.calendarPosts ?? [])
@@ -65,7 +74,7 @@ export function AdminDashboard() {
     dispatch(setSelectedPostId(null))
   }
 
-  function handleToggleChannel(channel: 'vk' | 'tg', enabled: boolean) {
+  function handleToggleChannel(channel: string, enabled: boolean) {
     if (!selectedPostId) return
     dispatch(setChannelOverride({ postId: selectedPostId, channel, enabled }))
   }
@@ -93,6 +102,7 @@ export function AdminDashboard() {
                 />
                 <CrossPostingPanel
                   post={selectedPost}
+                  providers={crossProviders}
                   channels={channels}
                   onToggle={handleToggleChannel}
                   onPublish={handlePublish}
@@ -124,6 +134,7 @@ export function AdminDashboard() {
           />
           <CrossPostingPanel
             post={selectedPost}
+            providers={crossProviders}
             channels={channels}
             onToggle={handleToggleChannel}
             onPublish={handlePublish}

@@ -4,7 +4,7 @@ interface AdminState {
   currentYear: number
   currentMonth: number
   selectedPostId: string | null
-  channelOverrides: Record<string, { vk?: boolean; tg?: boolean }>
+  channelOverrides: Record<string, Record<string, boolean>>
   currentView: 'overview' | 'archive'
 }
 
@@ -29,7 +29,7 @@ export const adminSlice = createSlice({
     setSelectedPostId(state, action: PayloadAction<string | null>) {
       state.selectedPostId = action.payload
     },
-    setChannelOverride(state, action: PayloadAction<{ postId: string; channel: 'vk' | 'tg'; enabled: boolean }>) {
+    setChannelOverride(state, action: PayloadAction<{ postId: string; channel: string; enabled: boolean }>) {
       const { postId, channel, enabled } = action.payload
       if (!state.channelOverrides[postId]) state.channelOverrides[postId] = {}
       state.channelOverrides[postId][channel] = enabled

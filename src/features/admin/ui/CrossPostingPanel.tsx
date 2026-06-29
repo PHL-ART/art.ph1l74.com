@@ -16,20 +16,16 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   )
 }
 
-const CHANNELS = [
-  { key: 'vk' as const, name: 'VK', handle: 'phl_art' },
-  { key: 'tg' as const, name: 'TG', handle: '@phlart' },
-]
-
 interface Props {
   post: AdminPost | null
-  channels: { vk?: boolean; tg?: boolean }
-  onToggle: (channel: 'vk' | 'tg', enabled: boolean) => void
+  providers: { id: string; name: string; slug: string }[]
+  channels: Record<string, boolean>
+  onToggle: (providerSlug: string, enabled: boolean) => void
   onPublish: () => void
   isPublishing: boolean
 }
 
-export function CrossPostingPanel({ post, channels, onToggle, onPublish, isPublishing }: Props) {
+export function CrossPostingPanel({ post, providers, channels, onToggle, onPublish, isPublishing }: Props) {
   const s3Base = process.env.NEXT_PUBLIC_S3_BASE_URL
   const coverSrc = post?.coverImageKey && s3Base ? `${s3Base}/${post.coverImageKey}` : null
   const isPublished = post?.status === 'PUBLISHED'
@@ -56,15 +52,15 @@ export function CrossPostingPanel({ post, channels, onToggle, onPublish, isPubli
           </div>
           {!isPublished && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {CHANNELS.map(({ key, name, handle }) => {
-                const enabled = channels[key] ?? true
+              {providers.map((provider) => {
+                const enabled = channels[provider.slug] ?? true
                 return (
-                  <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.12)', padding: '13px 15px' }}>
+                  <div key={provider.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.12)', padding: '13px 15px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                      <span className="font-nav font-bold text-[13px] tracking-[0.04em]">{name}</span>
-                      <span className="font-body font-light text-[13px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{handle}</span>
+                      <span className="font-nav font-bold text-[13px] tracking-[0.04em]">{provider.name}</span>
+                      <span className="font-body font-light text-[13px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{provider.slug}</span>
                     </div>
-                    <Toggle on={enabled} onToggle={() => onToggle(key, !enabled)} />
+                    <Toggle on={enabled} onToggle={() => onToggle(provider.slug, !enabled)} />
                   </div>
                 )
               })}
