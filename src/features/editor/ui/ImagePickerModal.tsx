@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { uploadMedia } from '@/features/media/actions/uploadMedia'
+import { uploadToS3 } from '@/features/media/lib/uploadToS3'
 
 interface MediaFile { id: string; key: string; filename: string; type: string }
 
 interface Props {
   open: boolean
   onClose: () => void
-  /** Called once per image (insert without closing). Modal closes itself after all images. */
+  /** Called once per image inserted. Modal closes itself after all uploads. */
   onInsert: (key: string, src: string) => void
 }
 
@@ -36,9 +36,7 @@ export function ImagePickerModal({ open, onClose, onInsert }: Props) {
     const arr = Array.from(selected)
     for (let i = 0; i < arr.length; i++) {
       setProgress({ current: i + 1, total: arr.length })
-      const fd = new FormData()
-      fd.append('file', arr[i])
-      const result = await uploadMedia(fd)
+      const result = await uploadToS3(arr[i])
       if (result.success && result.key) {
         onInsert(result.key, `${s3Base}/${result.key}`)
       }

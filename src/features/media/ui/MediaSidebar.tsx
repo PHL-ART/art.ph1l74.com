@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { deleteMedia } from '@/features/media/actions/deleteMedia'
-import { uploadMedia } from '@/features/media/actions/uploadMedia'
+import { uploadToS3 } from '@/features/media/lib/uploadToS3'
 
 interface MediaFileDetail {
   id: string
@@ -48,10 +48,8 @@ export function MediaSidebar({ file, onClose, onDeleted, onReplaced }: Props) {
     const f = e.target.files?.[0]
     if (!f) return
     setReplacing(true)
-    const fd = new FormData()
-    fd.append('file', f)
     // Pass existing key so S3 object is overwritten in place and DB record is updated
-    await uploadMedia(fd, file!.key)
+    await uploadToS3(f, file!.key)
     setReplacing(false)
     onReplaced()
   }

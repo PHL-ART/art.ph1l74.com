@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { uploadMedia } from '@/features/media/actions/uploadMedia'
+import { uploadToS3 } from '@/features/media/lib/uploadToS3'
 
 interface Props {
   onUploaded: () => void
@@ -20,15 +20,12 @@ export function MediaUploadZone({ onUploaded }: Props) {
     let failed = 0
     for (let i = 0; i < arr.length; i++) {
       setProgress({ current: i + 1, total: arr.length })
-      const fd = new FormData()
-      fd.append('file', arr[i])
-      const result = await uploadMedia(fd)
+      const result = await uploadToS3(arr[i])
       if (!result.success) failed++
     }
     setProgress(null)
     if (failed > 0) setError(`Не удалось загрузить ${failed} из ${arr.length} файлов`)
     onUploaded()
-    // Reset so same files can be re-selected if needed
     if (inputRef.current) inputRef.current.value = ''
   }
 
