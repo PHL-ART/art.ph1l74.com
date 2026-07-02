@@ -59,7 +59,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: docker-compose.yml
-          target: /opt/phlart/
+          target: /home/projects/ph1l74.art/
 
       - name: SSH deploy
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
@@ -70,7 +70,7 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            cd /opt/phlart
+            cd /home/projects/ph1l74.art
             docker compose pull web
             docker compose up -d --no-deps --no-build web
             docker image prune -f
