@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import type { Metadata } from 'next'
 import { getAllPosts } from '@/entities/post/queries'
 import { PostsInfiniteGrid } from '@/features/posts/ui/PostsInfiniteGrid'
