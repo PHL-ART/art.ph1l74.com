@@ -1,8 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { BlockRenderer } from '../BlockRenderer'
-import type { Block } from '@/entities/post/types'
-
 vi.mock('@/shared/lib/getPostUrl', () => ({
   getPostUrl: (key: string) => `https://cdn.example.com/${key}`,
 }))
