@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   web:
-    build: .
+    image: ghcr.io/ph1l74/art.ph1l74.com:latest
     restart: unless-stopped
     env_file: .env
     healthcheck:
