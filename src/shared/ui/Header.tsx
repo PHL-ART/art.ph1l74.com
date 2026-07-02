@@ -6,14 +6,49 @@ import { useState } from 'react'
 import { Logo } from './Logo'
 import { ThemeToggle } from './ThemeToggle'
 
-interface HeaderProps {
-  categories: { id: string; name: string; slug: string }[]
+interface Category {
+  id: string
+  name: string
+  slug: string
 }
+
+interface HeaderProps {
+  categories: Category[]
+}
+
+// ── Ссылка на категорию в навигации ──────────────────────────────────────────
+
+interface NavCategoryLinkProps {
+  category: Category
+  isActive: boolean
+  className?: string
+}
+
+function NavCategoryLink({ category, isActive, className }: NavCategoryLinkProps) {
+  return (
+    <Link
+      href={`/${category.slug}`}
+      className={`font-nav font-semibold text-[13px] tracking-[0.06em] uppercase pb-1 transition-colors ${className ?? ''}`}
+      style={{
+        color: isActive ? 'var(--color-text)' : 'var(--color-caption)',
+        borderBottom: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
+      }}
+    >
+      {category.name}
+    </Link>
+  )
+}
+
+// ── Шапка сайта ──────────────────────────────────────────────────────────────
 
 export function Header({ categories }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [query, setQuery] = useState('')
+
+  function isActiveCat(slug: string) {
+    return pathname === `/${slug}` || pathname.startsWith(`/${slug}/`)
+  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -23,36 +58,28 @@ export function Header({ categories }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30" style={{ background: 'var(--color-bg-header)' }}>
       <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
-        {/* ── Main header row ─────────────────────────── */}
+
+        {/* ── Основная строка шапки ──────────────────────────────── */}
         <div
           className="flex items-center justify-between"
           style={{ padding: '20px 44px' }}
         >
           <Logo size={38} />
 
-          {/* Desktop nav — centered */}
+          {/* Десктоп навигация — по центру */}
           <nav className="hidden md:flex gap-[30px]">
-            {categories.map(cat => {
-              const isActive = pathname === `/${cat.slug}` || pathname.startsWith(`/${cat.slug}/`)
-              return (
-                <Link
-                  key={cat.id}
-                  href={`/${cat.slug}`}
-                  className="font-nav font-semibold text-[13px] tracking-[0.06em] uppercase pb-1 transition-colors"
-                  style={{
-                    color: isActive ? 'var(--color-text)' : 'var(--color-caption)',
-                    borderBottom: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
-                  }}
-                >
-                  {cat.name}
-                </Link>
-              )
-            })}
+            {categories.map(cat => (
+              <NavCategoryLink
+                key={cat.id}
+                category={cat}
+                isActive={isActiveCat(cat.slug)}
+              />
+            ))}
           </nav>
 
-          {/* Right: search + theme */}
+          {/* Правый блок: поиск и переключатель темы */}
           <div className="flex items-center gap-3">
-            {/* Desktop inline search */}
+            {/* Инлайн-поиск для десктопа */}
             <form onSubmit={handleSearch} className="hidden md:flex items-center relative">
               <svg
                 width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -72,7 +99,7 @@ export function Header({ categories }: HeaderProps) {
               />
             </form>
 
-            {/* Mobile search icon */}
+            {/* Иконка поиска для мобильных */}
             <Link
               href="/search"
               aria-label="Поиск"
@@ -88,7 +115,7 @@ export function Header({ categories }: HeaderProps) {
           </div>
         </div>
 
-        {/* ── Mobile secondary nav row ──────────────── */}
+        {/* ── Мобильная навигация — вторая строка под шапкой ───────── */}
         <nav
           className="md:hidden flex overflow-x-auto"
           style={{
@@ -99,22 +126,14 @@ export function Header({ categories }: HeaderProps) {
           }}
           aria-label="Разделы"
         >
-          {categories.map(cat => {
-            const isActive = pathname === `/${cat.slug}` || pathname.startsWith(`/${cat.slug}/`)
-            return (
-              <Link
-                key={cat.id}
-                href={`/${cat.slug}`}
-                className="font-nav font-semibold text-[13px] tracking-[0.06em] uppercase flex-shrink-0 pb-1"
-                style={{
-                  color: isActive ? 'var(--color-text)' : 'var(--color-caption)',
-                  borderBottom: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
-                }}
-              >
-                {cat.name}
-              </Link>
-            )
-          })}
+          {categories.map(cat => (
+            <NavCategoryLink
+              key={cat.id}
+              category={cat}
+              isActive={isActiveCat(cat.slug)}
+              className="flex-shrink-0"
+            />
+          ))}
         </nav>
       </div>
     </header>

@@ -24,6 +24,77 @@ const FILTERS: { label: string; value: MediaType }[] = [
   { label: 'Аудио', value: 'AUDIO' },
 ]
 
+// Иконки для не-изображений в сетке медиатеки
+const MEDIA_TYPE_ICON: Record<string, string> = {
+  VIDEO: '▶',
+  AUDIO: '♪',
+}
+
+// ── Карточка одного файла в сетке ────────────────────────────────────────────
+
+interface MediaFileCardProps {
+  file: MediaFile
+  src: string
+  isSelected: boolean
+  onSelect: () => void
+}
+
+function MediaFileCard({ file, src, isSelected, onSelect }: MediaFileCardProps) {
+  return (
+    <div
+      onClick={onSelect}
+      style={{
+        cursor: 'pointer',
+        border: isSelected
+          ? '2px solid #ff3b30'
+          : '1px solid rgba(255,255,255,0.1)',
+        background: 'rgba(255,255,255,0.03)',
+        transition: 'border-color 0.12s',
+      }}
+    >
+      {file.type === 'IMAGE' ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={file.filename}
+          style={{ width: '100%', height: 100, objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        /* Заглушка для видео и аудио — иконка по центру */
+        <div
+          style={{
+            width: '100%',
+            height: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'rgba(255,255,255,0.3)',
+            fontSize: 28,
+          }}
+        >
+          {MEDIA_TYPE_ICON[file.type] ?? '?'}
+        </div>
+      )}
+
+      <div style={{ padding: '6px 8px' }}>
+        <div
+          className="font-nav font-bold text-[10px]"
+          style={{
+            color: 'rgba(255,255,255,0.7)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {file.filename}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Медиатека ─────────────────────────────────────────────────────────────────
+
 export function MediaLibrary() {
   const [files, setFiles] = useState<MediaFile[]>([])
   const [filter, setFilter] = useState<MediaType>('ALL')
@@ -44,16 +115,18 @@ export function MediaLibrary() {
     fetchFiles()
   }, [fetchFiles])
 
-  // When a file is deleted, clear selection if it was selected
   function handleDeleted() {
     setSelectedFile(null)
     fetchFiles()
   }
 
-  // After replace, refresh and clear selection (the old file still exists)
   function handleReplaced() {
     setSelectedFile(null)
     fetchFiles()
+  }
+
+  function toggleSelection(file: MediaFile) {
+    setSelectedFile(prev => (prev?.id === file.id ? null : file))
   }
 
   return (
@@ -61,7 +134,7 @@ export function MediaLibrary() {
       <AdminSidebar />
 
       <div className="flex flex-col flex-1 min-w-0">
-        {/* Topbar */}
+        {/* Шапка медиатеки */}
         <div
           className="flex items-center justify-between px-8 py-5"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
@@ -70,7 +143,7 @@ export function MediaLibrary() {
             Медиатека
           </h1>
 
-          {/* Type filter buttons */}
+          {/* Кнопки фильтра по типу файла */}
           <div className="flex gap-1">
             {FILTERS.map(({ label, value }) => (
               <button
@@ -91,23 +164,17 @@ export function MediaLibrary() {
           </div>
         </div>
 
-        {/* Body: grid + optional sidebar */}
+        {/* Основное тело: сетка + опциональный сайдбар */}
         <div className="flex flex-1 min-h-0">
           <div className="flex flex-col flex-1 overflow-auto p-8 gap-6">
             <MediaUploadZone onUploaded={fetchFiles} />
 
             {loading ? (
-              <div
-                className="font-body font-light text-sm"
-                style={{ color: 'rgba(255,255,255,0.4)' }}
-              >
+              <div className="font-body font-light text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 Загрузка...
               </div>
             ) : files.length === 0 ? (
-              <div
-                className="font-body font-light text-sm"
-                style={{ color: 'rgba(255,255,255,0.3)', marginTop: 8 }}
-              >
+              <div className="font-body font-light text-sm" style={{ color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>
                 Нет файлов
               </div>
             ) : (
@@ -118,66 +185,20 @@ export function MediaLibrary() {
                   gap: 12,
                 }}
               >
-                {files.map(file => {
-                  const src = `${s3Base}/${file.key}`
-                  const isSelected = selectedFile?.id === file.id
-
-                  return (
-                    <div
-                      key={file.id}
-                      onClick={() => setSelectedFile(isSelected ? null : file)}
-                      style={{
-                        cursor: 'pointer',
-                        border: isSelected
-                          ? '2px solid #ff3b30'
-                          : '1px solid rgba(255,255,255,0.1)',
-                        background: 'rgba(255,255,255,0.03)',
-                        transition: 'border-color 0.12s',
-                      }}
-                    >
-                      {file.type === 'IMAGE' ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={src}
-                          alt={file.filename}
-                          style={{ width: '100%', height: 100, objectFit: 'cover', display: 'block' }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: '100%',
-                            height: 100,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'rgba(255,255,255,0.3)',
-                            fontSize: 28,
-                          }}
-                        >
-                          {file.type === 'VIDEO' ? '▶' : '♪'}
-                        </div>
-                      )}
-                      <div style={{ padding: '6px 8px' }}>
-                        <div
-                          className="font-nav font-bold text-[10px]"
-                          style={{
-                            color: 'rgba(255,255,255,0.7)',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {file.filename}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                {files.map(file => (
+                  <MediaFileCard
+                    key={file.id}
+                    file={file}
+                    src={`${s3Base}/${file.key}`}
+                    isSelected={selectedFile?.id === file.id}
+                    onSelect={() => toggleSelection(file)}
+                  />
+                ))}
               </div>
             )}
           </div>
 
-          {/* Detail sidebar — only visible when a file is selected */}
+          {/* Детальный сайдбар — виден только при выбранном файле */}
           <MediaSidebar
             file={selectedFile}
             onClose={() => setSelectedFile(null)}

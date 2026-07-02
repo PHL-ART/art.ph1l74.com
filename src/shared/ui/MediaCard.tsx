@@ -1,10 +1,10 @@
-import { Fragment } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { getPostUrl } from '@/shared/lib/getPostUrl'
 import { formatDate } from '@/shared/lib/formatDate'
 import { cn } from '@/shared/lib/cn'
 import { CARD_GRADIENTS } from '@/shared/lib/gradients'
+import { CategoryChips } from './CategoryChips'
+import { MetaRow } from './MetaRow'
+import { PostThumbnail } from './PostThumbnail'
 
 interface MediaCardProps {
   title: string
@@ -25,12 +25,11 @@ export function MediaCard({
   excerpt,
   publishedAt,
   categories,
-  tags,
+  tags = [],
   placeholderGradient = CARD_GRADIENTS[0],
   className,
 }: MediaCardProps) {
   const date = formatDate(publishedAt)
-  const tagList = tags ?? []
 
   return (
     <article
@@ -45,49 +44,29 @@ export function MediaCard({
         background: 'rgba(255,255,255,0.03)',
       }}
     >
-      {/* Stretched link — covers entire card at z-[1] */}
+      {/* Растянутая ссылка покрывает всю карточку на z-[1] */}
       <Link href={`/post/${slug}`} className="absolute inset-0 z-[1]" aria-label={title} />
 
-      {/* Cover — pointer-events-none: clicks fall through to stretched link */}
-      <div
-        className="relative overflow-hidden pointer-events-none"
-        style={{ height: '188px' }}
-      >
-        {coverImageKey ? (
-          <Image
-            src={getPostUrl(coverImageKey)}
-            alt={title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        ) : (
-          <div className="absolute inset-0" style={{ background: placeholderGradient }} />
-        )}
-      </div>
+      {/* Обложка — без перехвата кликов (клик падает на растянутую ссылку) */}
+      <PostThumbnail
+        coverImageKey={coverImageKey}
+        title={title}
+        placeholderGradient={placeholderGradient}
+        className="pointer-events-none"
+        height={188}
+      />
 
-      {/* Content — z-[2] pointer-events-none; interactive children override to auto */}
+      {/* Контентный блок: z-[2], интерактивные дети сами перехватывают клики */}
       <div
         className="relative z-[2] flex flex-col gap-[9px] pointer-events-none"
         style={{ padding: '18px 18px 22px' }}
       >
-        {/* Categories row — pointer-events-auto so they capture clicks */}
-        {categories.length > 0 && (
-          <div className="flex flex-wrap gap-[8px] pointer-events-auto">
-            {categories.map(cat => (
-              <Link
-                key={cat.id}
-                href={`/search?cat=${cat.slug}`}
-                className="chip-link font-nav font-bold text-[11px] tracking-[0.10em] uppercase"
-                style={{ color: 'var(--color-accent)' }}
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-        )}
+        <CategoryChips
+          categories={categories}
+          className="pointer-events-auto"
+        />
 
-        {/* Title — not a link; clicks fall through to stretched link */}
+        {/* Заголовок — не ссылка, клик падает на растянутую ссылку */}
         <h3
           className="font-display font-bold lowercase"
           style={{ fontSize: '22px', lineHeight: '1.08', color: 'var(--color-text)' }}
@@ -95,7 +74,6 @@ export function MediaCard({
           {title}
         </h3>
 
-        {/* Excerpt */}
         {excerpt && (
           <p
             className="font-body"
@@ -105,27 +83,11 @@ export function MediaCard({
           </p>
         )}
 
-        {/* Date + tags row — pointer-events-none on wrapper; tag links override to auto */}
-        {(date || tagList.length > 0) && (
-          <div
-            className="font-nav font-medium text-[11px] tracking-[0.06em] uppercase flex flex-wrap items-center gap-[6px]"
-            style={{ color: 'var(--color-caption-faint)', marginTop: '3px' }}
-          >
-            {date && <span>{date}</span>}
-            {tagList.map((tag, i) => (
-              <Fragment key={tag.id}>
-                {(!!date || i > 0) && <span aria-hidden>·</span>}
-                <Link
-                  href={`/search?tag=${tag.slug}`}
-                  className="chip-link pointer-events-auto"
-                  style={{ color: 'var(--color-caption-faint)' }}
-                >
-                  {tag.name}
-                </Link>
-              </Fragment>
-            ))}
-          </div>
-        )}
+        <MetaRow
+          date={date}
+          tags={tags}
+          className="mt-[3px]"
+        />
       </div>
     </article>
   )

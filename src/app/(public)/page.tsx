@@ -1,22 +1,15 @@
-import { Fragment } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getFeaturedPost, getRecentPosts } from '@/entities/post/queries'
 import { MediaCard } from '@/shared/ui'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
 import { formatDate } from '@/shared/lib/formatDate'
+import { extractLead } from '@/shared/lib/extractLead'
+import { CategoryChips } from '@/shared/ui/CategoryChips'
+import { MetaRow } from '@/shared/ui/MetaRow'
 import { CARD_GRADIENTS, HERO_GRADIENT } from '@/shared/lib/gradients'
 
 export const revalidate = 60
-
-function extractLead(body: unknown): string | null {
-  if (!body || typeof body !== 'object') return null
-  const b = body as { blocks?: { type: string; html?: string; isLead?: boolean }[] }
-  if (!Array.isArray(b.blocks)) return null
-  const lead = b.blocks.find(bl => bl.type === 'text' && bl.isLead)
-  const raw = lead?.html ?? b.blocks.find(bl => bl.type === 'text')?.html ?? null
-  return raw ? raw.replace(/<[^>]+>/g, '') : null
-}
 
 export default async function HomePage() {
   const [featured, recent] = await Promise.all([getFeaturedPost(), getRecentPosts(12)])
@@ -25,14 +18,14 @@ export default async function HomePage() {
   return (
     <div style={{ background: 'var(--color-bg)' }}>
 
+      {/* ── Герой с избранным материалом ─────────────────────────────── */}
       {featured && (
         <section>
-          {/* ── Full-width banner hero ── */}
           <div
             className="group relative overflow-hidden"
             style={{ minHeight: 'clamp(420px, 52vh, 580px)' }}
           >
-            {/* Cover / gradient background */}
+            {/* Обложка или градиент-фон */}
             {featured.coverImageKey ? (
               <Image
                 src={getPostUrl(featured.coverImageKey)}
@@ -46,7 +39,7 @@ export default async function HomePage() {
               <div className="absolute inset-0" style={{ background: HERO_GRADIENT }} />
             )}
 
-            {/* Dark overlay */}
+            {/* Затемняющий градиент снизу */}
             <div
               className="absolute inset-0"
               style={{
@@ -54,14 +47,14 @@ export default async function HomePage() {
               }}
             />
 
-            {/* Stretched link for post navigation */}
+            {/* Растянутая ссылка для перехода к посту */}
             <Link
               href={`/post/${featured.slug}`}
               className="absolute inset-0 z-[1]"
               aria-label={featured.title}
             />
 
-            {/* Logo centered — pointer-events-none */}
+            {/* Логотип по центру — без перехвата кликов */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-white.svg" alt="PHL·ART" width={42} height={42} className="logo-dark" />
@@ -69,31 +62,18 @@ export default async function HomePage() {
               <img src="/logo-black.svg" alt="" width={42} height={42} aria-hidden className="logo-light" />
             </div>
 
-            {/* Text at bottom — pointer-events-none wrapper */}
+            {/* Текст внизу герой-блока */}
             <div
               className="absolute bottom-0 left-0 right-0 pointer-events-none z-[2]"
               style={{ padding: '0 44px 36px' }}
             >
-              {/* Categories only — pointer-events-auto so they intercept clicks */}
-              {featured.categories.length > 0 && (
-                <div
-                  className="flex flex-wrap gap-3 pointer-events-auto"
-                  style={{ marginBottom: '14px' }}
-                >
-                  {featured.categories.map(cat => (
-                    <Link
-                      key={cat.id}
-                      href={`/search?cat=${cat.slug}`}
-                      className="chip-link font-nav font-bold text-[12px] tracking-[0.12em] uppercase"
-                      style={{ color: 'var(--color-accent)' }}
-                    >
-                      {cat.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <CategoryChips
+                categories={featured.categories}
+                size="large"
+                className="pointer-events-auto mb-[14px]"
+              />
 
-              {/* Title — not a link; clicks fall to stretched link */}
+              {/* Заголовок — не ссылка, клик перехватывается растянутой ссылкой */}
               <h1
                 className="font-display font-bold lowercase"
                 style={{
@@ -123,32 +103,18 @@ export default async function HomePage() {
                 </p>
               )}
 
-              {(featured.publishedAt || featured.tags.length > 0) && (
-                <div
-                  className="flex flex-wrap items-center gap-[6px] pointer-events-auto font-nav font-medium text-[11px] tracking-[0.06em] uppercase"
-                  style={{ color: 'rgba(255,255,255,0.45)' }}
-                >
-                  {featured.publishedAt && <span>{formatDate(featured.publishedAt)}</span>}
-                  {featured.tags.map((tag, i) => (
-                    <Fragment key={tag.id}>
-                      {(!!featured.publishedAt || i > 0) && <span aria-hidden>·</span>}
-                      <Link
-                        href={`/search?tag=${tag.slug}`}
-                        className="chip-link"
-                        style={{ color: 'rgba(255,255,255,0.45)' }}
-                      >
-                        {tag.name}
-                      </Link>
-                    </Fragment>
-                  ))}
-                </div>
-              )}
+              <MetaRow
+                date={featured.publishedAt ? formatDate(featured.publishedAt) : undefined}
+                tags={featured.tags}
+                color="rgba(255,255,255,0.45)"
+                className="pointer-events-auto"
+              />
             </div>
           </div>
         </section>
       )}
 
-      {/* ── Recent posts ──────────────────────────────────── */}
+      {/* ── Последние материалы ───────────────────────────────────────── */}
       {recent.length > 0 && (
         <section>
           <div
@@ -170,7 +136,7 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          {/* Mobile: single col. Desktop: 3-col */}
+          {/* Mobile: 1 колонка. Desktop: 3 колонки */}
           <div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 px-5 md:px-11"
             style={{ gap: '16px', paddingBottom: '52px' }}

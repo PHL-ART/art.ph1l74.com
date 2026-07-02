@@ -1,22 +1,17 @@
-import { Fragment } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import DOMPurify from 'isomorphic-dompurify'
 import { searchPosts, browsePosts } from '@/shared/lib/search'
-import { getPostUrl } from '@/shared/lib/getPostUrl'
 import { formatDate } from '@/shared/lib/formatDate'
-import { CARD_GRADIENTS } from '@/shared/lib/gradients'
+import { extractLead } from '@/shared/lib/extractLead'
+import { CategoryChips } from '@/shared/ui/CategoryChips'
+import { MetaRow } from '@/shared/ui/MetaRow'
+import { PostThumbnail } from '@/shared/ui/PostThumbnail'
 
 interface Props {
   searchParams: { q?: string; cat?: string; tag?: string }
 }
 
-function extractExcerpt(body: unknown): string | null {
-  if (!body || typeof body !== 'object') return null
-  const b = body as { blocks?: { type: string; html?: string }[] }
-  const blocks = Array.isArray(b) ? b : (b?.blocks ?? [])
-  return blocks.find(bl => bl.type === 'text')?.html?.replace(/<[^>]+>/g, '') ?? null
-}
+// ── Утилиты подсветки ────────────────────────────────────────────────────────
 
 function escapeHtml(text: string): string {
   return text
@@ -27,16 +22,149 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#039;')
 }
 
-function highlight(text: string, query: string): string {
-  const safe = escapeHtml(text)
-  if (!query.trim()) return safe
+/**
+ * Оборачивает все вхождения query в <mark> для визуальной подсветки.
+ * Использует DOMPurify для защиты от XSS.
+ */
+function highlightQuery(text: string, query: string): string {
+  const safeText = escapeHtml(text)
+  if (!query.trim()) return safeText
+
   const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const marked = safe.replace(
+  const marked = safeText.replace(
     new RegExp(`(${escapeHtml(escapedQuery)})`, 'gi'),
     '<mark style="background:none;color:var(--color-accent);font-weight:inherit">$1</mark>',
   )
   return DOMPurify.sanitize(marked, { ALLOWED_TAGS: ['mark'], ALLOWED_ATTR: ['style'] })
 }
+
+// ── Чип фильтра по категории ─────────────────────────────────────────────────
+
+interface FilterChipProps {
+  label: string
+  href: string
+  isActive: boolean
+}
+
+function FilterChip({ label, href, isActive }: FilterChipProps) {
+  return (
+    <Link
+      href={href}
+      className="font-nav font-bold text-[11px] tracking-[0.08em] uppercase transition-colors"
+      style={{
+        padding: '6px 14px',
+        border: `1px solid ${isActive ? 'var(--color-accent)' : 'var(--color-hairline)'}`,
+        background: isActive ? 'var(--color-accent)' : 'transparent',
+        color: isActive ? '#fff' : 'var(--color-caption)',
+        borderRadius: '3px',
+      }}
+    >
+      {label}
+    </Link>
+  )
+}
+
+// ── Строка одного результата поиска ──────────────────────────────────────────
+
+interface SearchPost {
+  id: string
+  slug: string
+  title: string
+  coverImageKey?: string | null
+  publishedAt: Date | null
+  body: unknown
+  categories: { id: string; name: string; slug: string }[]
+  tags: { id: string; name: string; slug: string }[]
+}
+
+interface SearchResultRowProps {
+  post: SearchPost
+  index: number
+  query: string
+}
+
+function SearchResultRow({ post, index, query }: SearchResultRowProps) {
+  const excerpt = extractLead(post.body)
+  const date = formatDate(post.publishedAt)
+
+  return (
+    <div
+      className="group relative"
+      style={{
+        display: 'flex',
+        gap: '28px',
+        padding: '24px 0',
+        borderBottom: '1px solid var(--color-hairline)',
+      }}
+    >
+      {/* Растянутая ссылка покрывает всю строку */}
+      <Link
+        href={`/post/${post.slug}`}
+        className="absolute inset-0 z-[1]"
+        aria-label={post.title}
+      />
+
+      {/* Миниатюра */}
+      <PostThumbnail
+        coverImageKey={post.coverImageKey}
+        title={post.title}
+        index={index}
+        className="flex-shrink-0 z-[2] pointer-events-none"
+        width={180}
+        height={120}
+        sizes="180px"
+      />
+
+      {/* Текстовый блок */}
+      <div className="relative z-[2] pointer-events-none" style={{ flex: 1, minWidth: 0 }}>
+        {post.categories.length > 0 && (
+          <CategoryChips
+            categories={post.categories}
+            className="pointer-events-auto mb-[6px]"
+          />
+        )}
+
+        <h2
+          className="font-display font-bold lowercase group-hover:opacity-80 transition-opacity"
+          style={{
+            fontSize: '22px',
+            lineHeight: '1.05',
+            letterSpacing: '-0.01em',
+            color: 'var(--color-text)',
+            marginBottom: excerpt ? '8px' : '6px',
+          }}
+          dangerouslySetInnerHTML={{ __html: highlightQuery(post.title, query) }}
+        />
+
+        {excerpt && (
+          <p
+            className="font-body"
+            style={{
+              fontWeight: 300,
+              fontSize: '14px',
+              lineHeight: '1.6',
+              color: 'var(--color-caption)',
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              marginBottom: '6px',
+            }}
+            dangerouslySetInnerHTML={{ __html: highlightQuery(excerpt, query) }}
+          />
+        )}
+
+        <MetaRow
+          date={date}
+          tags={post.tags}
+          className="pointer-events-auto"
+        />
+      </div>
+    </div>
+  )
+}
+
+// ── Страница поиска ───────────────────────────────────────────────────────────
 
 export default async function SearchPage({ searchParams }: Props) {
   const query = searchParams.q?.trim() ?? ''
@@ -45,38 +173,37 @@ export default async function SearchPage({ searchParams }: Props) {
 
   const isBrowseMode = !query && (activeCat || activeTag)
 
-  // Text search: fetch all, filter by cat locally (so we can show chip counts)
-  // Browse mode: fetch by cat/tag directly
+  // При текстовом поиске загружаем все результаты, чтобы посчитать кол-во по категориям
+  // В режиме просмотра — сразу фильтруем на сервере
   const allResults = query
     ? await searchPosts(query)
     : isBrowseMode
       ? await browsePosts({ cat: activeCat || undefined, tag: activeTag || undefined })
       : []
 
-  // For text search: optionally filter by active category chip
+  // При текстовом поиске — дополнительно фильтруем по выбранному чипу категории
   const results = query && activeCat
     ? allResults.filter(p => p.categories.some(c => c.slug === activeCat))
     : allResults
 
-  // Category counts for filter chips (text search only)
+  // Считаем количество постов по каждой категории (только в режиме текстового поиска)
   const catCounts: Record<string, { name: string; slug: string; count: number }> = {}
   if (query) {
     for (const post of allResults) {
       for (const cat of post.categories) {
-        if (!catCounts[cat.slug]) catCounts[cat.slug] = { name: cat.name, slug: cat.slug, count: 0 }
+        catCounts[cat.slug] ??= { name: cat.name, slug: cat.slug, count: 0 }
         catCounts[cat.slug].count++
       }
     }
   }
 
-  const buildUrl = (cat: string) => {
+  function buildFilterUrl(cat: string) {
     const params = new URLSearchParams()
     if (query) params.set('q', query)
     if (cat) params.set('cat', cat)
     return `/search?${params.toString()}`
   }
 
-  // Heading for browse mode
   const browseLabel = isBrowseMode
     ? activeCat
       ? `Категория: ${allResults[0]?.categories.find(c => c.slug === activeCat)?.name ?? activeCat}`
@@ -87,7 +214,6 @@ export default async function SearchPage({ searchParams }: Props) {
 
   return (
     <div style={{ background: 'var(--color-bg)', padding: '52px 44px 80px', minHeight: '80vh' }}>
-
       {hasContent ? (
         <>
           <div
@@ -120,158 +246,31 @@ export default async function SearchPage({ searchParams }: Props) {
             {allResults.length === 1 ? 'материал' : allResults.length < 5 ? 'материала' : 'материалов'}
           </p>
 
-          {/* Filter chips (text search only) */}
+          {/* Чипы-фильтры по категориям (только при текстовом поиске) */}
           {query && Object.keys(catCounts).length > 0 && (
             <div className="flex flex-wrap gap-2" style={{ marginBottom: '36px' }}>
-              <Link
-                href={buildUrl('')}
-                className="font-nav font-bold text-[11px] tracking-[0.08em] uppercase transition-colors"
-                style={{
-                  padding: '6px 14px',
-                  border: `1px solid ${!activeCat ? 'var(--color-accent)' : 'var(--color-hairline)'}`,
-                  background: !activeCat ? 'var(--color-accent)' : 'transparent',
-                  color: !activeCat ? '#fff' : 'var(--color-caption)',
-                  borderRadius: '3px',
-                }}
-              >
-                Все · {allResults.length}
-              </Link>
+              <FilterChip
+                label={`Все · ${allResults.length}`}
+                href={buildFilterUrl('')}
+                isActive={!activeCat}
+              />
               {Object.values(catCounts).map(cat => (
-                <Link
+                <FilterChip
                   key={cat.slug}
-                  href={buildUrl(cat.slug)}
-                  className="font-nav font-bold text-[11px] tracking-[0.08em] uppercase transition-colors"
-                  style={{
-                    padding: '6px 14px',
-                    border: `1px solid ${activeCat === cat.slug ? 'var(--color-accent)' : 'var(--color-hairline)'}`,
-                    background: activeCat === cat.slug ? 'var(--color-accent)' : 'transparent',
-                    color: activeCat === cat.slug ? '#fff' : 'var(--color-caption)',
-                    borderRadius: '3px',
-                  }}
-                >
-                  {cat.name} · {cat.count}
-                </Link>
+                  label={`${cat.name} · ${cat.count}`}
+                  href={buildFilterUrl(cat.slug)}
+                  isActive={activeCat === cat.slug}
+                />
               ))}
             </div>
           )}
 
-          {/* Results list */}
+          {/* Список результатов */}
           {results.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {results.map((post, i) => {
-                const excerpt = extractExcerpt(post.body)
-                const date = formatDate(post.publishedAt)
-
-                return (
-                  <div
-                    key={post.id}
-                    className="group relative"
-                    style={{
-                      display: 'flex',
-                      gap: '28px',
-                      padding: '24px 0',
-                      borderBottom: '1px solid var(--color-hairline)',
-                    }}
-                  >
-                    {/* Stretched link */}
-                    <Link
-                      href={`/post/${post.slug}`}
-                      className="absolute inset-0 z-[1]"
-                      aria-label={post.title}
-                    />
-
-                    <div
-                      className="relative flex-shrink-0 overflow-hidden z-[2] pointer-events-none"
-                      style={{ width: '180px', height: '120px' }}
-                    >
-                      {post.coverImageKey ? (
-                        <Image
-                          src={getPostUrl(post.coverImageKey)}
-                          alt={post.title}
-                          fill
-                          className="object-cover"
-                          sizes="180px"
-                        />
-                      ) : (
-                        <div
-                          className="absolute inset-0"
-                          style={{ background: CARD_GRADIENTS[i % CARD_GRADIENTS.length] }}
-                        />
-                      )}
-                    </div>
-
-                    <div className="relative z-[2] pointer-events-none" style={{ flex: 1, minWidth: 0 }}>
-                      {/* Categories */}
-                      {post.categories.length > 0 && (
-                        <div className="flex flex-wrap gap-x-3 gap-y-1 pointer-events-auto" style={{ marginBottom: '6px' }}>
-                          {post.categories.map(cat => (
-                            <Link
-                              key={cat.id}
-                              href={`/search?cat=${cat.slug}`}
-                              className="chip-link font-nav font-bold text-[11px] tracking-[0.10em] uppercase"
-                              style={{ color: 'var(--color-accent)' }}
-                            >
-                              {cat.name}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-
-                      <h2
-                        className="font-display font-bold lowercase group-hover:opacity-80 transition-opacity"
-                        style={{
-                          fontSize: '22px',
-                          lineHeight: '1.05',
-                          letterSpacing: '-0.01em',
-                          color: 'var(--color-text)',
-                          marginBottom: excerpt ? '8px' : '6px',
-                        }}
-                        dangerouslySetInnerHTML={{ __html: highlight(post.title, query) }}
-                      />
-
-                      {excerpt && (
-                        <p
-                          className="font-body"
-                          style={{
-                            fontWeight: 300,
-                            fontSize: '14px',
-                            lineHeight: '1.6',
-                            color: 'var(--color-caption)',
-                            overflow: 'hidden',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            marginBottom: '6px',
-                          }}
-                          dangerouslySetInnerHTML={{ __html: highlight(excerpt, query) }}
-                        />
-                      )}
-
-                      {/* Date + tags row */}
-                      {(date || post.tags.length > 0) && (
-                        <div
-                          className="flex flex-wrap items-center gap-[6px] pointer-events-auto font-nav font-medium text-[11px] tracking-[0.06em] uppercase"
-                          style={{ color: 'var(--color-caption-faint)' }}
-                        >
-                          {date && <span>{date}</span>}
-                          {post.tags.map((tag, ti) => (
-                            <Fragment key={tag.id}>
-                              {(!!date || ti > 0) && <span aria-hidden>·</span>}
-                              <Link
-                                href={`/search?tag=${tag.slug}`}
-                                className="chip-link"
-                                style={{ color: 'var(--color-caption-faint)' }}
-                              >
-                                {tag.name}
-                              </Link>
-                            </Fragment>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+              {results.map((post, i) => (
+                <SearchResultRow key={post.id} post={post} index={i} query={query} />
+              ))}
             </div>
           ) : (
             <p
