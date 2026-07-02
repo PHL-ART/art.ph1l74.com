@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import type { AdminPost } from '@/features/admin/types'
 import { deletePost } from '@/features/admin/actions/deletePost'
 import { AdminArchive } from './AdminArchive'
@@ -13,7 +12,6 @@ interface Props {
 }
 
 export function ArchiveView({ selectedPostId, onSelectPost }: Props) {
-  const router = useRouter()
   const [search, setSearch] = useState('')
   const [posts, setPosts] = useState<AdminPost[]>([])
   const [loading, setLoading] = useState(false)
