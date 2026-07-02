@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import DOMPurify from 'isomorphic-dompurify'
 import { searchPosts, browsePosts } from '@/shared/lib/search'
