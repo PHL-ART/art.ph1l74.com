@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   web:
-    image: ghcr.io/ph1l74/art.ph1l74.com:latest
+    image: ghcr.io/phl-art/art.ph1l74.com:latest
     restart: unless-stopped
     env_file: .env
     healthcheck:
@@ -17,6 +15,8 @@ services:
       - "traefik.http.routers.phlart.entrypoints=websecure"
       - "traefik.http.routers.phlart.tls.certresolver=letsencrypt"
       - "traefik.http.services.phlart.loadbalancer.server.port=3000"
+    networks:
+      - ph1l74-network
 
 networks:
   default:
