@@ -21,4 +21,4 @@ services:
 networks:
   default:
     external: true
-    name: traefik
+    name: ph1l74-network
