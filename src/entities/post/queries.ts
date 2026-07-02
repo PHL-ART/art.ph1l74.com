@@ -19,6 +19,7 @@ const postPreviewSelect = {
 export async function getFeaturedPost(): Promise<(PostPreview & { body: unknown }) | null> {
   return prisma.post.findFirst({
     where: { status: 'PUBLISHED', isFeatured: true },
+    orderBy: { publishedAt: 'desc' },
     select: { ...postPreviewSelect, body: true },
   })
 }
@@ -26,6 +27,16 @@ export async function getFeaturedPost(): Promise<(PostPreview & { body: unknown 
 export async function getRecentPosts(limit: number, offset = 0): Promise<PostPreview[]> {
   return prisma.post.findMany({
     where: { status: 'PUBLISHED', isFeatured: false },
+    orderBy: { publishedAt: 'desc' },
+    take: limit,
+    skip: offset,
+    select: postPreviewSelect,
+  })
+}
+
+export async function getAllPosts(limit: number, offset = 0): Promise<PostPreview[]> {
+  return prisma.post.findMany({
+    where: { status: 'PUBLISHED' },
     orderBy: { publishedAt: 'desc' },
     take: limit,
     skip: offset,

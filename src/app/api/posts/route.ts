@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { getRecentPosts } from '@/entities/post/queries'
+import { getAllPosts } from '@/entities/post/queries'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit
 
   // Fetch one extra to know if more pages exist
-  const all = await getRecentPosts(limit + 1, offset)
+  const all = await getAllPosts(limit + 1, offset)
   const hasMore = all.length > limit
   const posts = all.slice(0, limit)
 

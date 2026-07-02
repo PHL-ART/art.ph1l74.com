@@ -7,6 +7,9 @@ const nextConfig = {
     },
   },
   images: {
+    // Images are served directly from S3 — Next.js optimization is bypassed.
+    // This avoids /_next/image 500s caused by missing sharp or S3 CORS restrictions.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

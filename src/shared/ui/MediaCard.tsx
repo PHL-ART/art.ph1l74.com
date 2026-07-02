@@ -37,7 +37,7 @@ export function MediaCard({
       className={cn(
         'group relative overflow-hidden cursor-pointer',
         'border transition-all duration-200 ease-out',
-        'hover:-translate-y-[3px] hover:bg-white/[0.04] active:scale-[0.98]',
+        'hover:-translate-y-[3px] hover:bg-white/[0.06] hover:shadow-[0_0_32px_rgba(255,255,255,0.10)] hover:border-white/30 active:scale-[0.98]',
         className,
       )}
       style={{

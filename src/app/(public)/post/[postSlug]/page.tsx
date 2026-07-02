@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Image from 'next/image'
@@ -6,7 +7,6 @@ import { getPostBySlug } from '@/entities/post/queries'
 import { BlockRenderer } from '@/entities/post/ui/BlockRenderer'
 import { ReadingProgress, SocialLinks } from '@/shared/ui'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
-import type { Block, TextBlock } from '@/entities/post/types'
 import { ViewCounter } from './ViewCounter'
 
 export const revalidate = 300
@@ -15,12 +15,6 @@ interface Props {
   params: { postSlug: string }
 }
 
-function estimateReadingTime(blocks: Block[]): number {
-  const words = blocks
-    .filter((b): b is TextBlock => b.type === 'text')
-    .reduce((acc, b) => acc + (b.html?.replace(/<[^>]+>/g, '').split(/\s+/).length ?? 0), 0)
-  return Math.max(1, Math.round(words / 220))
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getPostBySlug(params.postSlug)
@@ -73,8 +67,6 @@ export default async function PostPage({ params }: Props) {
   const post = await getPostBySlug(params.postSlug)
   if (!post) notFound()
 
-  const readingMinutes = estimateReadingTime(post.body)
-
   const date = post.publishedAt
     ? (() => {
         const d = new Date(post.publishedAt)
@@ -82,12 +74,6 @@ export default async function PostPage({ params }: Props) {
         return `${dm} ${d.getFullYear()}`
       })()
     : null
-
-  const metaLine = [
-    date,
-    `${readingMinutes} мин чтения`,
-    'текст и фото — PHL·ART',
-  ].filter(Boolean).join(' · ')
 
   return (
     <>
@@ -136,7 +122,7 @@ export default async function PostPage({ params }: Props) {
           style={{ maxWidth: '740px', padding: '0 44px' }}
         >
           <header style={{ marginTop: '-32px', position: 'relative', zIndex: 1 }}>
-            {(post.categories.length > 0 || post.tags.length > 0) && (
+            {post.categories.length > 0 && (
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1" style={{ marginBottom: '16px' }}>
                 {post.categories.map(cat => (
                   <Link
@@ -146,16 +132,6 @@ export default async function PostPage({ params }: Props) {
                     style={{ color: 'var(--color-accent)' }}
                   >
                     {cat.name}
-                  </Link>
-                ))}
-                {post.tags.map(tag => (
-                  <Link
-                    key={tag.id}
-                    href={`/search?tag=${tag.slug}`}
-                    className="chip-link font-nav font-bold text-[12px] tracking-[0.12em] uppercase"
-                    style={{ color: 'var(--color-caption)' }}
-                  >
-                    {tag.name}
                   </Link>
                 ))}
               </div>
@@ -174,12 +150,26 @@ export default async function PostPage({ params }: Props) {
               {post.title}
             </h1>
 
-            <div
-              className="font-nav font-medium text-[12px] tracking-[0.06em] uppercase"
-              style={{ color: 'var(--color-caption)', marginBottom: '48px' }}
-            >
-              {metaLine}
-            </div>
+            {(date || post.tags.length > 0) && (
+              <div
+                className="flex flex-wrap items-center gap-[6px] font-nav font-medium text-[12px] tracking-[0.06em] uppercase"
+                style={{ color: 'var(--color-caption)', marginBottom: '48px' }}
+              >
+                {date && <span>{date}</span>}
+                {post.tags.map((tag, i) => (
+                  <Fragment key={tag.id}>
+                    {(!!date || i > 0) && <span aria-hidden>·</span>}
+                    <Link
+                      href={`/search?tag=${tag.slug}`}
+                      className="chip-link"
+                      style={{ color: 'var(--color-caption)' }}
+                    >
+                      {tag.name}
+                    </Link>
+                  </Fragment>
+                ))}
+              </div>
+            )}
           </header>
 
           {/* ── Body content ──────────────────────────── */}

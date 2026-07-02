@@ -1,8 +1,10 @@
+import { Fragment } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import DOMPurify from 'isomorphic-dompurify'
 import { searchPosts, browsePosts } from '@/shared/lib/search'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
+import { formatDate } from '@/shared/lib/formatDate'
 import { CARD_GRADIENTS } from '@/shared/lib/gradients'
 
 interface Props {
@@ -158,23 +160,28 @@ export default async function SearchPage({ searchParams }: Props) {
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {results.map((post, i) => {
                 const excerpt = extractExcerpt(post.body)
-                const tagLabel = post.tags.map(t => t.name).join(' · ')
+                const date = formatDate(post.publishedAt)
 
                 return (
-                  <Link
+                  <div
                     key={post.id}
-                    href={`/post/${post.slug}`}
-                    className="group"
+                    className="group relative"
                     style={{
                       display: 'flex',
                       gap: '28px',
                       padding: '24px 0',
                       borderBottom: '1px solid var(--color-hairline)',
-                      textDecoration: 'none',
                     }}
                   >
+                    {/* Stretched link */}
+                    <Link
+                      href={`/post/${post.slug}`}
+                      className="absolute inset-0 z-[1]"
+                      aria-label={post.title}
+                    />
+
                     <div
-                      className="relative flex-shrink-0 overflow-hidden"
+                      className="relative flex-shrink-0 overflow-hidden z-[2] pointer-events-none"
                       style={{ width: '180px', height: '120px' }}
                     >
                       {post.coverImageKey ? (
@@ -193,15 +200,23 @@ export default async function SearchPage({ searchParams }: Props) {
                       )}
                     </div>
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      {tagLabel && (
-                        <div
-                          className="font-nav font-bold text-[11px] tracking-[0.10em] uppercase"
-                          style={{ color: 'var(--color-accent)', marginBottom: '8px' }}
-                        >
-                          {tagLabel}
+                    <div className="relative z-[2] pointer-events-none" style={{ flex: 1, minWidth: 0 }}>
+                      {/* Categories */}
+                      {post.categories.length > 0 && (
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 pointer-events-auto" style={{ marginBottom: '6px' }}>
+                          {post.categories.map(cat => (
+                            <Link
+                              key={cat.id}
+                              href={`/search?cat=${cat.slug}`}
+                              className="chip-link font-nav font-bold text-[11px] tracking-[0.10em] uppercase"
+                              style={{ color: 'var(--color-accent)' }}
+                            >
+                              {cat.name}
+                            </Link>
+                          ))}
                         </div>
                       )}
+
                       <h2
                         className="font-display font-bold lowercase group-hover:opacity-80 transition-opacity"
                         style={{
@@ -209,10 +224,11 @@ export default async function SearchPage({ searchParams }: Props) {
                           lineHeight: '1.05',
                           letterSpacing: '-0.01em',
                           color: 'var(--color-text)',
-                          marginBottom: excerpt ? '8px' : 0,
+                          marginBottom: excerpt ? '8px' : '6px',
                         }}
                         dangerouslySetInnerHTML={{ __html: highlight(post.title, query) }}
                       />
+
                       {excerpt && (
                         <p
                           className="font-body"
@@ -225,12 +241,35 @@ export default async function SearchPage({ searchParams }: Props) {
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
+                            marginBottom: '6px',
                           }}
                           dangerouslySetInnerHTML={{ __html: highlight(excerpt, query) }}
                         />
                       )}
+
+                      {/* Date + tags row */}
+                      {(date || post.tags.length > 0) && (
+                        <div
+                          className="flex flex-wrap items-center gap-[6px] pointer-events-auto font-nav font-medium text-[11px] tracking-[0.06em] uppercase"
+                          style={{ color: 'var(--color-caption-faint)' }}
+                        >
+                          {date && <span>{date}</span>}
+                          {post.tags.map((tag, ti) => (
+                            <Fragment key={tag.id}>
+                              {(!!date || ti > 0) && <span aria-hidden>·</span>}
+                              <Link
+                                href={`/search?tag=${tag.slug}`}
+                                className="chip-link"
+                                style={{ color: 'var(--color-caption-faint)' }}
+                              >
+                                {tag.name}
+                              </Link>
+                            </Fragment>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>

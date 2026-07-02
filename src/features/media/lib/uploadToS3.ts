@@ -1,22 +1,37 @@
+import imageCompression from 'browser-image-compression'
 import { registerMedia } from '@/features/media/actions/registerMedia'
 
-/**
- * Upload a file directly from the browser to S3 via presigned URL,
- * then register it in the database.
- *
- * Returns the S3 key on success.
- */
+const COMPRESS_OPTIONS = {
+  maxSizeMB: 1.5,
+  maxWidthOrHeight: 2400,
+  useWebWorker: true,
+  fileType: 'image/jpeg' as const,
+}
+
+async function maybeCompress(file: File): Promise<File> {
+  if (!file.type.startsWith('image/') || file.type === 'image/gif') return file
+  try {
+    const compressed = await imageCompression(file, COMPRESS_OPTIONS)
+    // Only use compressed version if it's actually smaller
+    return compressed.size < file.size ? compressed : file
+  } catch {
+    return file
+  }
+}
+
 export async function uploadToS3(
   file: File,
   existingKey?: string,
 ): Promise<{ success: boolean; key?: string; error?: string }> {
+  const uploadFile = await maybeCompress(file)
+
   // 1. Get presigned URL from server
   const presignRes = await fetch('/api/admin/media/presign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       filename: file.name,
-      contentType: file.type,
+      contentType: uploadFile.type,
       ...(existingKey ? { existingKey } : {}),
     }),
   })
@@ -31,8 +46,8 @@ export async function uploadToS3(
   // 2. PUT the file directly to S3 (browser → S3, bypasses Next.js)
   const s3Res = await fetch(uploadUrl, {
     method: 'PUT',
-    headers: { 'Content-Type': file.type },
-    body: file,
+    headers: { 'Content-Type': uploadFile.type },
+    body: uploadFile,
   })
 
   if (!s3Res.ok) {
@@ -40,5 +55,5 @@ export async function uploadToS3(
   }
 
   // 3. Register the file in the database
-  return registerMedia({ key, filename: file.name, size: file.size, contentType: file.type })
+  return registerMedia({ key, filename: file.name, size: uploadFile.size, contentType: uploadFile.type })
 }

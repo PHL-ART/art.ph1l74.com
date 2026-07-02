@@ -28,6 +28,13 @@ export async function updatePublished(
     })
     if (!existing) return { success: false, error: 'Published post not found' }
 
+    if (data.isFeatured === true) {
+      await prisma.post.updateMany({
+        where: { id: { not: postId }, isFeatured: true },
+        data: { isFeatured: false },
+      })
+    }
+
     await prisma.post.update({
       where: { id: postId },
       data: {

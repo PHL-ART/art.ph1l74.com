@@ -30,6 +30,13 @@ export async function saveDraft(
     })
     if (!existing) return { success: false, error: 'Post not found or already published' }
 
+    if (data.isFeatured === true) {
+      await prisma.post.updateMany({
+        where: { id: { not: postId }, isFeatured: true },
+        data: { isFeatured: false },
+      })
+    }
+
     await prisma.post.update({
       where: { id: postId },
       data: {

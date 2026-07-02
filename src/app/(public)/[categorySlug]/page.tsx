@@ -7,6 +7,18 @@ import { getPostsByCategory } from '@/entities/post/queries'
 import { getPostUrl } from '@/shared/lib/getPostUrl'
 import { CARD_GRADIENTS } from '@/shared/lib/gradients'
 
+const MONTH_EXCEPTIONS = ['март', 'май', 'июнь', 'июль']
+
+function formatPostDate(date: Date | null): { day: string; month: string; year: string } | null {
+  if (!date) return null
+  const d = new Date(date)
+  const day = String(d.getDate())
+  const year = String(d.getFullYear())
+  const monthFull = new Intl.DateTimeFormat('ru', { month: 'long' }).format(d)
+  const month = MONTH_EXCEPTIONS.includes(monthFull) ? monthFull : monthFull.slice(0, 3)
+  return { day, month, year }
+}
+
 export const revalidate = 60
 
 interface Props {
@@ -81,45 +93,64 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         {posts.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             {posts.map((post, i) => {
-              const globalIndex = offset + i + 1
-              const isFirst = globalIndex === 1
               const excerpt = extractLead(post.body)
-              const tagLabel = [
-                ...post.categories.map(c => c.name),
-                ...post.tags.map(t => t.name),
-              ].filter(n => n !== category.name).join(' · ') || post.categories.map(c => c.name).join(' · ')
+              const dateInfo = formatPostDate(post.publishedAt)
+              const otherCategories = post.categories.filter(c => c.slug !== params.categorySlug)
+              const hasChips = otherCategories.length > 0 || post.tags.length > 0
 
               return (
-                <Link
+                <div
                   key={post.id}
-                  href={`/post/${post.slug}`}
-                  className="group"
+                  className="group relative"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '28px',
                     padding: '24px 0',
                     borderBottom: '1px solid var(--color-hairline)',
-                    textDecoration: 'none',
                   }}
                 >
-                  {/* Index number */}
+                  {/* Stretched link — covers entire row at z-[1] */}
+                  <Link
+                    href={`/post/${post.slug}`}
+                    className="absolute inset-0 z-[1]"
+                    aria-label={post.title}
+                  />
+
+                  {/* Date column */}
                   <div
-                    className="font-nav font-bold flex-shrink-0"
-                    style={{
-                      width: '48px',
-                      fontSize: '22px',
-                      letterSpacing: '-0.01em',
-                      color: isFirst ? 'var(--color-accent)' : 'var(--color-caption)',
-                      textAlign: 'right',
-                    }}
+                    className="flex-shrink-0 text-right relative z-[2] pointer-events-none"
+                    style={{ width: '48px' }}
                   >
-                    {String(globalIndex).padStart(2, '0')}
+                    {dateInfo ? (
+                      <>
+                        <div
+                          className="font-nav font-bold"
+                          style={{ fontSize: '22px', lineHeight: '1.0', letterSpacing: '-0.01em', color: 'var(--color-text)' }}
+                        >
+                          {dateInfo.day}
+                        </div>
+                        <div
+                          className="font-nav font-medium uppercase"
+                          style={{ fontSize: '10px', letterSpacing: '0.06em', color: 'var(--color-caption)', marginTop: '2px' }}
+                        >
+                          {dateInfo.month}
+                        </div>
+                        <div
+                          className="font-nav"
+                          style={{ fontSize: '10px', letterSpacing: '0.04em', color: 'var(--color-caption)', opacity: 0.45, marginTop: '1px' }}
+                        >
+                          {dateInfo.year}
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ height: '48px' }} />
+                    )}
                   </div>
 
                   {/* Cover */}
                   <div
-                    className="relative flex-shrink-0 overflow-hidden"
+                    className="relative flex-shrink-0 overflow-hidden z-[2] pointer-events-none"
                     style={{ width: '270px', height: '150px' }}
                   >
                     {post.coverImageKey ? (
@@ -139,13 +170,29 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                   </div>
 
                   {/* Text */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {tagLabel && (
-                      <div
-                        className="font-nav font-bold text-[11px] tracking-[0.10em] uppercase"
-                        style={{ color: 'var(--color-accent)', marginBottom: '10px' }}
-                      >
-                        {tagLabel}
+                  <div className="relative z-[2] pointer-events-none" style={{ flex: 1, minWidth: 0 }}>
+                    {hasChips && (
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 pointer-events-auto" style={{ marginBottom: '10px' }}>
+                        {otherCategories.map(cat => (
+                          <Link
+                            key={cat.id}
+                            href={`/search?cat=${cat.slug}`}
+                            className="chip-link font-nav font-bold text-[11px] tracking-[0.10em] uppercase"
+                            style={{ color: 'var(--color-accent)' }}
+                          >
+                            {cat.name}
+                          </Link>
+                        ))}
+                        {post.tags.map(tag => (
+                          <Link
+                            key={tag.id}
+                            href={`/search?tag=${tag.slug}`}
+                            className="chip-link font-nav font-bold text-[11px] tracking-[0.10em] uppercase"
+                            style={{ color: 'var(--color-accent)' }}
+                          >
+                            {tag.name}
+                          </Link>
+                        ))}
                       </div>
                     )}
                     <h2
@@ -180,7 +227,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                       </p>
                     )}
                   </div>
-                </Link>
+                </div>
               )
             })}
           </div>

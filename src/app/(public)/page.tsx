@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getFeaturedPost, getRecentPosts } from '@/entities/post/queries'
@@ -73,8 +74,8 @@ export default async function HomePage() {
               className="absolute bottom-0 left-0 right-0 pointer-events-none z-[2]"
               style={{ padding: '0 44px 36px' }}
             >
-              {/* Category/tag chips — pointer-events-auto so they intercept clicks */}
-              {(featured.categories.length > 0 || featured.tags.length > 0) && (
+              {/* Categories only — pointer-events-auto so they intercept clicks */}
+              {featured.categories.length > 0 && (
                 <div
                   className="flex flex-wrap gap-3 pointer-events-auto"
                   style={{ marginBottom: '14px' }}
@@ -87,16 +88,6 @@ export default async function HomePage() {
                       style={{ color: 'var(--color-accent)' }}
                     >
                       {cat.name}
-                    </Link>
-                  ))}
-                  {featured.tags.map(tag => (
-                    <Link
-                      key={tag.id}
-                      href={`/search?tag=${tag.slug}`}
-                      className="chip-link font-nav font-bold text-[12px] tracking-[0.12em] uppercase"
-                      style={{ color: 'var(--color-text-muted)' }}
-                    >
-                      {tag.name}
                     </Link>
                   ))}
                 </div>
@@ -132,12 +123,24 @@ export default async function HomePage() {
                 </p>
               )}
 
-              {featured.publishedAt && (
+              {(featured.publishedAt || featured.tags.length > 0) && (
                 <div
-                  className="font-nav font-medium text-[11px] tracking-[0.06em] uppercase"
+                  className="flex flex-wrap items-center gap-[6px] pointer-events-auto font-nav font-medium text-[11px] tracking-[0.06em] uppercase"
                   style={{ color: 'rgba(255,255,255,0.45)' }}
                 >
-                  {formatDate(featured.publishedAt)}
+                  {featured.publishedAt && <span>{formatDate(featured.publishedAt)}</span>}
+                  {featured.tags.map((tag, i) => (
+                    <Fragment key={tag.id}>
+                      {(!!featured.publishedAt || i > 0) && <span aria-hidden>·</span>}
+                      <Link
+                        href={`/search?tag=${tag.slug}`}
+                        className="chip-link"
+                        style={{ color: 'rgba(255,255,255,0.45)' }}
+                      >
+                        {tag.name}
+                      </Link>
+                    </Fragment>
+                  ))}
                 </div>
               )}
             </div>

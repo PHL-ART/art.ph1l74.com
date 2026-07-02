@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getRecentPosts } from '@/entities/post/queries'
+import { getAllPosts } from '@/entities/post/queries'
 import { PostsInfiniteGrid } from '@/features/posts/ui/PostsInfiniteGrid'
 
 export const revalidate = 60
@@ -13,7 +13,7 @@ const LIMIT = 12
 
 export default async function PostsPage() {
   // Fetch one extra to determine hasMore without a separate count query
-  const all = await getRecentPosts(LIMIT + 1, 0)
+  const all = await getAllPosts(LIMIT + 1, 0)
   const hasMore = all.length > LIMIT
   const posts = all.slice(0, LIMIT)
 
