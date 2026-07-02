@@ -9,6 +9,10 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+    networks:
+      - ph1l74-network
+
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.phlart.rule=Host(`art.ph1l74.com`)"
@@ -19,6 +23,5 @@ services:
       - ph1l74-network
 
 networks:
-  default:
+  ph1l74-network:
     external: true
-    name: ph1l74-network
