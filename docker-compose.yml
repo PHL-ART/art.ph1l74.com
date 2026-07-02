@@ -19,8 +19,6 @@ services:
       - "traefik.http.routers.phlart.entrypoints=websecure"
       - "traefik.http.routers.phlart.tls.certresolver=letsencrypt"
       - "traefik.http.services.phlart.loadbalancer.server.port=3000"
-    networks:
-      - ph1l74-network
 
 networks:
   ph1l74-network:
