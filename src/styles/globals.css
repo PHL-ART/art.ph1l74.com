@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root[data-theme="dark"] {
+  /* From tokens/colors.css — dark world */
+  --color-bg:        #0e0a0b;
+  --color-bg-footer: #0a0708;
+  --color-bg-header: #0e0a0b;
+  --color-text:      #ffffff;
+  --color-text-body: rgba(255, 255, 255, 0.92);
+  --color-text-muted: rgba(255, 255, 255, 0.70);
+  --color-caption:   rgba(255, 255, 255, 0.62);
+  --color-caption-faint: rgba(255, 255, 255, 0.42);
+  --color-accent:    #ff3b30;
+  --color-hairline:  rgba(255, 255, 255, 0.14);
+  --color-hairline-soft: rgba(255, 255, 255, 0.34);
+  --color-glass:     rgba(255, 255, 255, 0.03);
+  --color-dot:       #d9d9d9;
+}
+
+:root[data-theme="light"] {
+  --color-bg:        #f4f1f1;
+  --color-bg-footer: #ffffff;
+  --color-bg-header: #ffffff;
+  --color-text:      #1a1416;
+  --color-text-body: #2a2222;
+  --color-text-muted: #3e3535;
+  --color-caption:   #797575;
+  --color-caption-faint: #b8a2a2;
+  --color-accent:    #ff0000;
+  --color-hairline:  rgba(0, 0, 0, 0.12);
+  --color-hairline-soft: rgba(0, 0, 0, 0.08);
+  --color-glass:     rgba(0, 0, 0, 0.02);
+  --color-dot:       #797575;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Theme-aware logo swap */
+.logo-dark { display: block; }
+.logo-light { display: none; }
+[data-theme='light'] .logo-dark { display: none; }
+[data-theme='light'] .logo-light { display: block; }
+
+/* Tailwind utility aliases for design tokens */
+.text-text { color: var(--color-text); }
+.text-caption { color: var(--color-caption); }
+.text-accent { color: var(--color-accent); }
+.bg-header { background-color: var(--color-bg-header); }
+.border-hairline { border-color: var(--color-hairline); }
+
+/* Chip link — left-to-right underline on hover */
+.chip-link {
+  position: relative;
+  text-decoration: none;
+}
+.chip-link::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.25s ease;
+}
+.chip-link:hover::after {
+  width: 100%;
+}
+
+/* TipTap editor */
+.ProseMirror {
+  font-family: var(--font-jost, sans-serif);
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.9);
+}
+.ProseMirror p { margin: 0 0 1em; }
+.ProseMirror h2 { font-family: var(--font-manrope, sans-serif); font-size: 24px; font-weight: 700; margin: 1.5em 0 0.5em; }
+.ProseMirror h3 { font-family: var(--font-manrope, sans-serif); font-size: 18px; font-weight: 700; margin: 1.2em 0 0.4em; }
+.ProseMirror blockquote { border-left: 3px solid #ff3b30; padding-left: 16px; color: rgba(255,255,255,0.6); margin: 1em 0; }
+.ProseMirror p[data-is-lead="true"] { font-family: var(--font-manrope, sans-serif); font-size: 22px; font-weight: 700; line-height: 1.3; }
+.ProseMirror img { max-width: 100%; height: auto; display: block; margin: 1.5em 0; transition: outline 0.1s, opacity 0.1s; }
+.ProseMirror img.ProseMirror-selectednode { outline: 2px solid #ff3b30; outline-offset: 2px; opacity: 0.88; }
+/* Image highlighted when inside a TextSelection range */
+.ProseMirror img.phl-image-in-selection { outline: 2px solid rgba(255,59,48,0.7); outline-offset: 2px; opacity: 0.82; }
+.ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: rgba(255,255,255,0.25); pointer-events: none; float: left; height: 0; }
