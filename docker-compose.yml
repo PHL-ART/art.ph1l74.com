@@ -1,5 +1,5 @@
 services:
-  web:
+  ph1l74-art:
     image: ghcr.io/phl-art/art.ph1l74.com:latest
     restart: unless-stopped
     env_file: .env
@@ -15,10 +15,42 @@ services:
 
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.phlart.rule=Host(`art.ph1l74.com`)"
-      - "traefik.http.routers.phlart.entrypoints=websecure"
-      - "traefik.http.routers.phlart.tls.certresolver=letsencrypt"
-      - "traefik.http.services.phlart.loadbalancer.server.port=3000"
+
+      - "traefik.docker.network=ph1l74-network"
+
+      # HTTP router
+      - "traefik.http.routers.ph1l74-art.rule=Host(`art.ph1l74.com`) || Host(`www.art.ph1l74.com`)"
+      - "traefik.http.routers.ph1l74-art.entrypoints=web"
+
+      - "traefik.http.routers.ph1l74-art.service=ph1l74-art"
+
+      # HTTPS router
+      - "traefik.http.routers.ph1l74-art-secure.rule=Host(`art.ph1l74.com`) || Host(`www.art.ph1l74.com`)"
+      - "traefik.http.routers.ph1l74-art-secure.entrypoints=websecure"
+      - "traefik.http.routers.ph1l74-art-secure.tls=true"
+      - "traefik.http.routers.ph1l74-art-secure.service=ph1l74-art"
+      - "traefik.http.routers.ph1l74-art-secure.tls.certresolver=letsencrypt"
+
+      # Редирект HTTP -> HTTPS
+      - "traefik.http.middlewares.ph1l74-art-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.ph1l74-art-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.ph1l74-art.middlewares=ph1l74-art-redirect"
+
+      # Приложение слушает порт 3002
+      - "traefik.http.services.ph1l74-art.loadbalancer.server.port=3000"
+
+      # Дополнительные security-заголовки
+      - "traefik.http.middlewares.ph1l74-art-headers.headers.sslredirect=true"
+      - "traefik.http.middlewares.ph1l74-art-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.ph1l74-art-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.ph1l74-art-headers.headers.stsPreload=true"
+      - "traefik.http.routers.ph1l74-art-secure.middlewares=ph1l74-art-headers"
+
+      # Редирект с www на apex-домен
+      - "traefik.http.middlewares.ph1l74-art-www-redirect.redirectregex.regex=^https://www\\.(.+)"
+      - "traefik.http.middlewares.ph1l74-art-www-redirect.redirectregex.replacement=https://$$1"
+      - "traefik.http.middlewares.ph1l74-art-www-redirect.redirectregex.permanent=true"
+
 
 networks:
   ph1l74-network:
