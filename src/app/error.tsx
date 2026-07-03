@@ -68,6 +68,7 @@ export default function GlobalError({
               fontSize: '13px',
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
+              fontFamily: 'sans-serif',
             }}
           >
             попробовать снова
