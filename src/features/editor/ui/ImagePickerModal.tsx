@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { uploadToS3 } from '@/features/media/lib/uploadToS3'
+import { registerMedia } from '@/features/media/actions/registerMedia'
+import { isSafeImageUrl } from '@/features/editor/lib/validateImageUrl'
 
 interface MediaFile { id: string; key: string; filename: string; type: string }
 
@@ -14,20 +16,29 @@ interface Props {
 
 export function ImagePickerModal({ open, onClose, onInsert }: Props) {
   const [files, setFiles] = useState<MediaFile[]>([])
-  const [tab, setTab] = useState<'library' | 'upload'>('library')
+  const [tab, setTab] = useState<'library' | 'upload' | 'link'>('library')
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
+  const [linkUrl, setLinkUrl] = useState('')
+  const [linkError, setLinkError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const linkInputRef = useRef<HTMLInputElement>(null)
 
   const s3Base = process.env.NEXT_PUBLIC_S3_BASE_URL ?? ''
 
   useEffect(() => {
     if (!open) return
     setError(null)
+    setLinkError(null)
+    setLinkUrl('')
     setSelectedKeys(new Set())
     fetch('/api/admin/media?type=IMAGE').then(r => r.json()).then(d => setFiles(d.files ?? []))
   }, [open])
+
+  useEffect(() => {
+    if (open && tab === 'link') linkInputRef.current?.focus()
+  }, [open, tab])
 
   if (!open) return null
 
@@ -70,21 +81,44 @@ export function ImagePickerModal({ open, onClose, onInsert }: Props) {
     }
   }
 
+  async function handleInsertLink() {
+    const url = linkUrl.trim()
+    if (!url) return
+    if (!isSafeImageUrl(url)) {
+      setLinkError('Введите прямую ссылку на изображение (.jpg, .png, .gif, .webp)')
+      return
+    }
+    setLinkError(null)
+
+    // Register in media DB (best-effort — external URL stored as key)
+    const filename = url.split('/').pop()?.split('?')[0] ?? 'image.jpg'
+    registerMedia({ key: url, filename, size: 0, contentType: 'image/jpeg' }).catch(() => {})
+
+    onInsert([{ key: url, src: url }])
+    onClose()
+  }
+
   const uploading = progress !== null
+
+  const TAB_LABELS: Record<'library' | 'upload' | 'link', string> = {
+    library: 'Медиатека',
+    upload: 'Загрузить',
+    link: 'Ссылка',
+  }
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
       <div style={{ background: '#0e0a0b', border: '1px solid rgba(255,255,255,0.12)', width: 640, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
         <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex gap-1">
-            {(['library', 'upload'] as const).map(t => (
+            {(['library', 'upload', 'link'] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
                 className="font-nav font-bold text-[11px] tracking-[0.06em] uppercase"
                 style={{ padding: '6px 12px', background: tab === t ? 'rgba(255,255,255,0.08)' : 'transparent', border: 'none', color: tab === t ? '#fff' : 'rgba(255,255,255,0.45)', cursor: 'pointer' }}
               >
-                {t === 'library' ? 'Медиатека' : 'Загрузить'}
+                {TAB_LABELS[t]}
               </button>
             ))}
           </div>
@@ -150,9 +184,50 @@ export function ImagePickerModal({ open, onClose, onInsert }: Props) {
               />
             </label>
           )}
+
+          {tab === 'link' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p className="font-body font-light text-sm" style={{ color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+                Вставьте прямую ссылку на изображение
+              </p>
+              <input
+                ref={linkInputRef}
+                type="url"
+                placeholder="https://example.com/photo.jpg"
+                value={linkUrl}
+                onChange={e => { setLinkUrl(e.target.value); setLinkError(null) }}
+                onKeyDown={e => { if (e.key === 'Enter') handleInsertLink() }}
+                className="font-body text-sm"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  color: '#fff',
+                  padding: '10px 12px',
+                  outline: 'none',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                }}
+              />
+              {linkError && (
+                <span className="font-body font-light text-xs" style={{ color: '#ff5a4a' }}>{linkError}</span>
+              )}
+              {/* Preview */}
+              {isSafeImageUrl(linkUrl.trim()) && (
+                <div style={{ position: 'relative', width: '100%', height: 180, background: 'rgba(255,255,255,0.04)' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={linkUrl.trim()}
+                    alt="Preview"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    onError={() => setLinkError('Не удалось загрузить изображение по этой ссылке')}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Footer: insert selected button */}
+        {/* Footer */}
         {tab === 'library' && selectedKeys.size > 0 && (
           <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'flex-end' }}>
             <button
@@ -161,6 +236,18 @@ export function ImagePickerModal({ open, onClose, onInsert }: Props) {
               style={{ background: '#ff3b30', color: '#fff', border: 'none', padding: '9px 20px', cursor: 'pointer' }}
             >
               Вставить {selectedKeys.size > 1 ? `(${selectedKeys.size})` : ''}
+            </button>
+          </div>
+        )}
+
+        {tab === 'link' && linkUrl.trim() && (
+          <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              onClick={handleInsertLink}
+              className="font-nav font-bold text-[11px] tracking-[0.06em] uppercase"
+              style={{ background: '#ff3b30', color: '#fff', border: 'none', padding: '9px 20px', cursor: 'pointer' }}
+            >
+              Вставить
             </button>
           </div>
         )}

@@ -15,6 +15,8 @@ import {
   type Block,
   type TiptapDoc,
 } from '@/features/editor/lib/tiptapConverter'
+import { registerMedia } from '@/features/media/actions/registerMedia'
+import { isSafeImageUrl } from '@/features/editor/lib/validateImageUrl'
 import { saveDraft } from '@/features/admin/actions/saveDraft'
 import { publishPost } from '@/features/admin/actions/publishPost'
 import { updatePublished } from '@/features/admin/actions/updatePublished'
@@ -158,7 +160,66 @@ const ImageSelectionExtension = Extension.create({
 
         return false
       },
+
+      // When the selection spans images, ProseMirror's default delete doesn't handle
+      // atom nodes — intercept and delete the whole range explicitly.
+      'Backspace': () => {
+        const { state } = this.editor
+        const { selection } = state
+        if (selection.empty) return false
+        let hasImage = false
+        state.doc.nodesBetween(selection.from, selection.to, node => {
+          if (node.type.name === 'image') hasImage = true
+        })
+        if (!hasImage) return false
+        this.editor.view.dispatch(state.tr.delete(selection.from, selection.to))
+        return true
+      },
+
+      'Delete': () => {
+        const { state } = this.editor
+        const { selection } = state
+        if (selection.empty) return false
+        let hasImage = false
+        state.doc.nodesBetween(selection.from, selection.to, node => {
+          if (node.type.name === 'image') hasImage = true
+        })
+        if (!hasImage) return false
+        this.editor.view.dispatch(state.tr.delete(selection.from, selection.to))
+        return true
+      },
     }
+  },
+})
+
+// When text containing an image URL is pasted, insert it as an image block
+// and register it in the media library (best-effort, async).
+const PasteImageUrlExtension = Extension.create({
+  name: 'pasteImageUrl',
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('pasteImageUrl'),
+        props: {
+          handlePaste(view, event) {
+            const text = event.clipboardData?.getData('text/plain')?.trim() ?? ''
+            if (!isSafeImageUrl(text)) return false
+
+            const imageType = view.state.schema.nodes['image']
+            if (!imageType) return false
+
+            const node = imageType.create({ src: text, 'data-key': text })
+            view.dispatch(view.state.tr.replaceSelectionWith(node))
+
+            const filename = text.split('/').pop()?.split('?')[0] ?? 'image.jpg'
+            registerMedia({ key: text, filename, size: 0, contentType: 'image/jpeg' }).catch(() => {})
+
+            return true
+          },
+        },
+      }),
+    ]
   },
 })
 
@@ -207,6 +268,7 @@ export function PostEditor({ post, allCategories: initCategories, allTags: initT
       ImageWithKey,
       Placeholder.configure({ placeholder: 'Начните писать...' }),
       ImageSelectionExtension,
+      PasteImageUrlExtension,
     ],
     content: blocksToHtml(post.body as { blocks: Block[] }),
     editorProps: {
@@ -294,12 +356,12 @@ export function PostEditor({ post, allCategories: initCategories, allTags: initT
 
   function handleInsertImages(items: { key: string; src: string }[]) {
     if (!editor) return
-    let chain = editor.chain().focus()
+    editor.commands.focus()
     for (const { src, key } of items) {
+      // Each image needs its own run() so the cursor advances after each insertion
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      chain = chain.setImage({ src, 'data-key': key } as any)
+      editor.chain().setImage({ src, 'data-key': key } as any).run()
     }
-    chain.run()
   }
 
   const s3Base = process.env.NEXT_PUBLIC_S3_BASE_URL ?? ''

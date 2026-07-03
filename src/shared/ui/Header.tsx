@@ -22,12 +22,14 @@ interface NavCategoryLinkProps {
   category: Category
   isActive: boolean
   className?: string
+  onClick?: () => void
 }
 
-function NavCategoryLink({ category, isActive, className }: NavCategoryLinkProps) {
+function NavCategoryLink({ category, isActive, className, onClick }: NavCategoryLinkProps) {
   return (
     <Link
       href={`/${category.slug}`}
+      onClick={onClick}
       className={`font-nav font-semibold text-[13px] tracking-[0.06em] uppercase pb-1 transition-colors ${className ?? ''}`}
       style={{
         color: isActive ? 'var(--color-text)' : 'var(--color-caption)',
@@ -39,12 +41,34 @@ function NavCategoryLink({ category, isActive, className }: NavCategoryLinkProps
   )
 }
 
+// ── Иконка бургер-меню ────────────────────────────────────────────────────────
+
+function BurgerIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+      <line x1="3" y1="6" x2="19" y2="6" />
+      <line x1="3" y1="11" x2="19" y2="11" />
+      <line x1="3" y1="16" x2="19" y2="16" />
+    </svg>
+  )
+}
+
+function CloseIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
+      <line x1="5" y1="5" x2="17" y2="17" />
+      <line x1="17" y1="5" x2="5" y2="17" />
+    </svg>
+  )
+}
+
 // ── Шапка сайта ──────────────────────────────────────────────────────────────
 
 export function Header({ categories }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [query, setQuery] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
 
   function isActiveCat(slug: string) {
     return pathname === `/${slug}` || pathname.startsWith(`/${slug}/`)
@@ -52,22 +76,25 @@ export function Header({ categories }: HeaderProps) {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    if (query.trim()) router.push(`/search?q=${encodeURIComponent(query.trim())}`)
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`)
+      setMenuOpen(false)
+      setQuery('')
+    }
   }
 
   return (
     <header className="sticky top-0 z-30" style={{ background: 'var(--color-bg-header)' }}>
       <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
 
-        {/* ── Основная строка шапки ──────────────────────────────── */}
+        {/* ── Десктоп: одна строка ──────────────────────────────── */}
         <div
-          className="flex items-center justify-between"
+          className="hidden md:flex items-center justify-between"
           style={{ padding: '20px 44px' }}
         >
           <Logo size={38} />
 
-          {/* Десктоп навигация — по центру */}
-          <nav className="hidden md:flex gap-[30px]">
+          <nav className="flex gap-[30px]">
             {categories.map(cat => (
               <NavCategoryLink
                 key={cat.id}
@@ -77,10 +104,8 @@ export function Header({ categories }: HeaderProps) {
             ))}
           </nav>
 
-          {/* Правый блок: поиск и переключатель темы */}
           <div className="flex items-center gap-3">
-            {/* Инлайн-поиск для десктопа */}
-            <form onSubmit={handleSearch} className="hidden md:flex items-center relative">
+            <form onSubmit={handleSearch} className="flex items-center relative">
               <svg
                 width="14" height="14" viewBox="0 0 24 24" fill="none"
                 stroke="var(--color-caption)" strokeWidth="2" strokeLinecap="round"
@@ -98,43 +123,91 @@ export function Header({ categories }: HeaderProps) {
                 style={{ color: 'var(--color-caption)', paddingLeft: '22px' }}
               />
             </form>
-
-            {/* Иконка поиска для мобильных */}
-            <Link
-              href="/search"
-              aria-label="Поиск"
-              className="md:hidden flex items-center justify-center"
-              style={{ width: '44px', height: '44px', color: 'var(--color-caption)' }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-              </svg>
-            </Link>
-
             <ThemeToggle />
           </div>
         </div>
 
-        {/* ── Мобильная навигация — вторая строка под шапкой ───────── */}
-        <nav
-          className="md:hidden flex overflow-x-auto"
-          style={{
-            padding: '0 20px 12px',
-            gap: '28px',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-          }}
-          aria-label="Разделы"
+        {/* ── Мобильная шапка: логотип | бургер | тема ─────────── */}
+        <div
+          className="md:hidden grid items-center"
+          style={{ padding: '14px 20px', gridTemplateColumns: '1fr auto 1fr' }}
         >
-          {categories.map(cat => (
-            <NavCategoryLink
-              key={cat.id}
-              category={cat}
-              isActive={isActiveCat(cat.slug)}
-              className="flex-shrink-0"
-            />
-          ))}
-        </nav>
+          {/* Логотип — левый угол */}
+          <Logo size={32} />
+
+          {/* Бургер — по центру */}
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
+            aria-expanded={menuOpen}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-text)',
+              padding: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {menuOpen ? <CloseIcon /> : <BurgerIcon />}
+          </button>
+
+          {/* Выбор темы — правый угол */}
+          <div className="flex justify-end">
+            <ThemeToggle />
+          </div>
+        </div>
+
+        {/* ── Мобильное выпадающее меню ────────────────────────── */}
+        {menuOpen && (
+          <div
+            className="md:hidden"
+            style={{
+              borderTop: '1px solid var(--color-hairline)',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px',
+            }}
+          >
+            {/* Категории */}
+            <nav className="flex flex-col gap-5">
+              {categories.map(cat => (
+                <NavCategoryLink
+                  key={cat.id}
+                  category={cat}
+                  isActive={isActiveCat(cat.slug)}
+                  onClick={() => setMenuOpen(false)}
+                />
+              ))}
+            </nav>
+
+            {/* Поиск — в конце списка */}
+            <form
+              onSubmit={handleSearch}
+              className="flex items-center gap-3"
+              style={{ borderBottom: '1px solid var(--color-hairline)', paddingBottom: '10px' }}
+            >
+              <svg
+                width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="var(--color-caption)" strokeWidth="1.6" strokeLinecap="round" aria-hidden
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Поиск"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                className="font-nav font-semibold text-[13px] tracking-[0.06em] uppercase bg-transparent border-none outline-none flex-1"
+                style={{ color: 'var(--color-caption)' }}
+              />
+            </form>
+          </div>
+        )}
       </div>
     </header>
   )

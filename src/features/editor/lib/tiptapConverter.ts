@@ -57,9 +57,9 @@ export function blocksToHtml(body: { blocks: Block[] }): string {
         return `<h${block.level}>${escapeHtml(block.text)}</h${block.level}>`
       }
       if (block.type === 'image') {
-        const src = `${s3Base}/${block.key}`
+        const src = /^https?:\/\//.test(block.key) ? block.key : `${s3Base}/${block.key}`
         const alt = block.alt ? ` alt="${escapeHtml(block.alt)}"` : ''
-        return `<img src="${src}" data-key="${escapeHtml(block.key)}"${alt} />`
+        return `<img src="${escapeHtml(src)}" data-key="${escapeHtml(block.key)}"${alt} />`
       }
       return ''
     })
