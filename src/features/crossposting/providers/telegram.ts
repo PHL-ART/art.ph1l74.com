@@ -23,7 +23,7 @@ async function apiCall(
     result?: unknown
     description?: string
   }
-  if (!data.ok) throw new Error(`Telegram ${method}: ${data.description}`)
+  if (!data.ok) throw new Error(`Telegram ${method}: ${data.description ?? 'Unknown error'}`)
   return data.result
 }
 
