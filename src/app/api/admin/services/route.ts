@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   if (!name || !slug || !type) return Response.json({ error: 'Missing fields' }, { status: 400 })
 
   const service = await prisma.social.create({
-    data: { name, slug, iconUrl, type, apiToken: apiToken ?? null, config: config ?? null },
+    data: { name, slug, iconUrl: iconUrl ?? null, type, apiToken: apiToken ?? null, config: config ?? null },
   })
   return Response.json({ service }, { status: 201 })
 }
