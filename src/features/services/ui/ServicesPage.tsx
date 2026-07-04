@@ -30,7 +30,7 @@ export function ServicesPage() {
     fetchAll()
   }, [fetchAll])
 
-  async function handleAddCross(data: { name: string; slug: string; apiToken: string }) {
+  async function handleAddCross(data: { name: string; slug: string; apiToken: string; config: Record<string, string> | null }) {
     await fetch('/api/admin/services', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
