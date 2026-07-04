@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { ComboboxSelect, type ComboboxOption } from './ComboboxSelect'
+import type { CrossPostResult } from '@/features/crossposting/types'
 
 interface MediaFile { id: string; key: string; filename: string; type: string }
 
@@ -27,6 +28,10 @@ interface Props {
   onSave: () => void
   onPublish: () => void
   onScheduledAtChange: (v: string) => void
+  providers: { id: string; name: string; slug: string }[]
+  channelMap: Record<string, boolean>
+  onChannelToggle: (slug: string, enabled: boolean) => void
+  publishResults: CrossPostResult[] | null
 }
 
 const FIELD: React.CSSProperties = {
@@ -67,6 +72,10 @@ export function MetadataPanel({
   onSave,
   onPublish,
   onScheduledAtChange,
+  providers,
+  channelMap,
+  onChannelToggle,
+  publishResults,
 }: Props) {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
   const [publishing, setPublishing] = useState(false)
@@ -261,6 +270,67 @@ export function MetadataPanel({
           </div>
         )}
 
+        {/* Channels section */}
+        {providers.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div
+              className="font-nav font-bold text-[11px] tracking-[0.1em] uppercase"
+              style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}
+            >
+              Каналы
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {providers.map(provider => {
+                const enabled = channelMap[provider.slug] ?? true
+                return (
+                  <div
+                    key={provider.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      padding: '10px 12px',
+                    }}
+                  >
+                    <span className="font-nav font-bold text-[12px] tracking-[0.04em]">
+                      {provider.name}
+                    </span>
+                    <div
+                      onClick={() => onChannelToggle(provider.slug, !enabled)}
+                      role="switch"
+                      aria-checked={enabled}
+                      style={{
+                        cursor: 'pointer',
+                        width: 34,
+                        height: 19,
+                        borderRadius: 999,
+                        background: enabled ? '#ff3b30' : 'rgba(255,255,255,0.14)',
+                        position: 'relative',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 2,
+                          [enabled ? 'right' : 'left']: 2,
+                          width: 15,
+                          height: 15,
+                          borderRadius: '50%',
+                          background: enabled ? '#fff' : 'rgba(255,255,255,0.55)',
+                          transition: 'left 0.15s, right 0.15s',
+                        }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Scheduled publishing — hidden for already-published posts */}
         {!isPublished && (
           <div>
@@ -326,6 +396,42 @@ export function MetadataPanel({
                 ? 'Публикация...'
                 : 'Опубликовать'}
         </button>
+
+        {publishResults && publishResults.length > 0 && (
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {publishResults.map(r => (
+              <div
+                key={r.slug}
+                className="font-body font-light text-[12px]"
+                style={{
+                  color: r.success ? '#4caf50' : '#ff5a4a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{r.success ? '✓' : '✗'}</span>
+                <span>
+                  {r.slug}
+                  {r.success && r.externalUrl ? (
+                    <a
+                      href={r.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'inherit', marginLeft: 4 }}
+                    >
+                      {' '}— опубликовано
+                    </a>
+                  ) : r.success ? (
+                    ' — опубликовано'
+                  ) : (
+                    ` — ошибка: ${r.error}`
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

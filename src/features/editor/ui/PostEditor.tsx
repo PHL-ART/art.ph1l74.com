@@ -23,6 +23,7 @@ import { updatePublished } from '@/features/admin/actions/updatePublished'
 import { createCategory } from '@/features/admin/actions/createCategory'
 import { createTag } from '@/features/admin/actions/createTag'
 import type { ComboboxOption } from './ComboboxSelect'
+import type { CrossPostResult } from '@/features/crossposting/types'
 import { AdminSidebar } from '@/features/admin/ui/AdminSidebar'
 import { EditorToolbar } from './EditorToolbar'
 import { MetadataPanel } from './MetadataPanel'
@@ -246,17 +247,25 @@ export function PostEditor({ post, allCategories: initCategories, allTags: initT
   const [publishError, setPublishError] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [channelMap, setChannelMap] = useState<Record<string, boolean>>({})
+  const [providers, setProviders] = useState<{ id: string; name: string; slug: string }[]>([])
+  const [publishResults, setPublishResults] = useState<CrossPostResult[] | null>(null)
   const [scheduledAt, setScheduledAt] = useState<string>('')
 
   useEffect(() => {
     fetch('/api/admin/services?type=CROSS_POSTING')
       .then(r => r.json())
-      .then(data => {
-        const map: Record<string, boolean> = {}
-        for (const s of data.services ?? []) map[s.slug] = true
-        setChannelMap(map)
+      .then((d: { services: { id: string; name: string; slug: string }[] }) => {
+        const svcs = d.services ?? []
+        setProviders(svcs)
+        setChannelMap(prev => {
+          const next = { ...prev }
+          for (const svc of svcs) {
+            if (!(svc.slug in next)) next[svc.slug] = true
+          }
+          return next
+        })
       })
-      .catch(() => {})
+      .catch(console.error)
   }, [])
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -318,9 +327,18 @@ export function PostEditor({ post, allCategories: initCategories, allTags: initT
 
   async function handlePublish() {
     setPublishError(null)
+    setPublishResults(null)
     await doSave()
     const result = await publishPost(post.id, channelMap, scheduledAt || undefined)
-    if (!result.success) setPublishError(result.error ?? 'Ошибка публикации')
+    if (!result.success) {
+      setPublishError(result.error ?? 'Ошибка публикации')
+    } else {
+      setPublishResults(result.results ?? null)
+    }
+  }
+
+  const handleChannelToggle = (slug: string, enabled: boolean) => {
+    setChannelMap(prev => ({ ...prev, [slug]: enabled }))
   }
 
   function handleTitleChange(value: string) {
@@ -415,6 +433,10 @@ export function PostEditor({ post, allCategories: initCategories, allTags: initT
           onSave={doSave}
           onPublish={handlePublish}
           onScheduledAtChange={setScheduledAt}
+          providers={providers}
+          channelMap={channelMap}
+          onChannelToggle={handleChannelToggle}
+          publishResults={publishResults}
         />
       </div>
 
