@@ -28,9 +28,11 @@ export async function POST(req: NextRequest) {
   if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { name, slug, iconUrl, type, apiToken } = body
+  const { name, slug, iconUrl, type, apiToken, config } = body
   if (!name || !slug || !type) return Response.json({ error: 'Missing fields' }, { status: 400 })
 
-  const service = await prisma.social.create({ data: { name, slug, iconUrl, type, apiToken } })
+  const service = await prisma.social.create({
+    data: { name, slug, iconUrl, type, apiToken: apiToken ?? null, config: config ?? null },
+  })
   return Response.json({ service }, { status: 201 })
 }
