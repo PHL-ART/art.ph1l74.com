@@ -1,22 +1,17 @@
 'use server'
 
 import { getServerSession } from 'next-auth'
-import { revalidatePath } from 'next/cache'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/shared/lib/prisma'
-
-async function crossPostToChannels(
-  postId: string,
-  channels: Record<string, boolean>
-): Promise<void> {
-  console.log('[crosspost] postId=%s channels=%j', postId, channels)
-}
+import { revalidatePath } from 'next/cache'
+import { crossPostToChannels } from '@/features/crossposting/crossPostToChannels'
+import type { CrossPostResult } from '@/features/crossposting/types'
 
 export async function publishPost(
   postId: string,
   channels: Record<string, boolean>,
   scheduledAt?: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; results?: CrossPostResult[] }> {
   const session = await getServerSession(authOptions)
   if (!session) return { success: false, error: 'Unauthorized' }
 
@@ -58,9 +53,9 @@ export async function publishPost(
       revalidatePath(`/${cat.slug}`)
     }
 
-    await crossPostToChannels(postId, channels)
+    const results = await crossPostToChannels(postId, channels)
 
-    return { success: true }
+    return { success: true, results }
   } catch (err) {
     console.error('[publishPost]', err)
     return { success: false, error: 'Failed to publish post' }
