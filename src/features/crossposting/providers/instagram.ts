@@ -18,6 +18,18 @@ async function graphPost(path: string, params: Record<string, string>): Promise<
   return data
 }
 
+async function graphGet(path: string, params: Record<string, string>): Promise<unknown> {
+  const url = new URL(`${GRAPH}${path}`)
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
+  const res = await fetch(url.toString())
+  const data = (await res.json()) as {
+    permalink?: string
+    error?: { message: string }
+  }
+  if (data.error) throw new Error(`Instagram GET ${path}: ${data.error.message}`)
+  return data
+}
+
 export const instagramProvider: CrossPostProvider = {
   slug: 'instagram',
   async post(payload: CrossPostPayload, config: SocialConfig): Promise<CrossPostResult> {
@@ -67,10 +79,10 @@ export const instagramProvider: CrossPostProvider = {
       })) as { id: string }
 
       // Fetch permalink
-      const permaRes = await fetch(
-        `${GRAPH}/${published.id}?fields=permalink&access_token=${token}`,
-      )
-      const permaData = (await permaRes.json()) as { permalink?: string }
+      const permaData = (await graphGet(`/${published.id}`, {
+        fields: 'permalink',
+        access_token: token,
+      })) as { permalink?: string }
 
       return {
         slug: 'instagram',
