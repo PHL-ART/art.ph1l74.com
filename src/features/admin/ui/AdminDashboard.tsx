@@ -7,6 +7,7 @@ import type { RootState, AppDispatch } from '@/shared/store'
 import { setMonth, setSelectedPostId, setChannelOverride } from '@/features/admin/model/adminSlice'
 import type { AdminPost } from '@/features/admin/types'
 import { publishPost } from '@/features/admin/actions/publishPost'
+import type { CrossPostResult } from '@/features/crossposting/types'
 import { AdminSidebar } from './AdminSidebar'
 import { AdminTopbar } from './AdminTopbar'
 import { AdminCalendar } from './AdminCalendar'
@@ -30,6 +31,7 @@ export function AdminDashboard() {
   const [crossProviders, setCrossProviders] = useState<{ id: string; name: string; slug: string }[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
+  const [publishResults, setPublishResults] = useState<CrossPostResult[] | null>(null)
 
   useEffect(() => {
     setIsLoading(true)
@@ -63,6 +65,7 @@ export function AdminDashboard() {
   async function handlePublish() {
     if (!selectedPostId) return
     setIsPublishing(true)
+    setPublishResults(null)
     const channelMap = Object.fromEntries(
       crossProviders.map(p => [p.slug, channels[p.slug] ?? true])
     )
@@ -72,6 +75,7 @@ export function AdminDashboard() {
       setCalendarPosts(data.calendarPosts ?? [])
       setArchivePosts(data.archivePosts ?? [])
       fetchDrafts()
+      setPublishResults(result.results ?? null)
     }
     setIsPublishing(false)
   }
@@ -119,6 +123,7 @@ export function AdminDashboard() {
                   onToggle={handleToggleChannel}
                   onPublish={handlePublish}
                   isPublishing={isPublishing}
+                  publishResults={publishResults}
                 />
               </div>
 
@@ -164,6 +169,7 @@ export function AdminDashboard() {
             onToggle={handleToggleChannel}
             onPublish={handlePublish}
             isPublishing={isPublishing}
+            publishResults={publishResults}
           />
           <DraftsTable
             posts={draftPosts}

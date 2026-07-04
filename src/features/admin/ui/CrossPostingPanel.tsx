@@ -1,6 +1,7 @@
 'use client'
 
 import type { AdminPost } from '@/features/admin/types'
+import type { CrossPostResult } from '@/features/crossposting/types'
 
 const STATUS_LABEL: Record<string, string> = {
   PUBLISHED: 'опубликовано',
@@ -23,9 +24,10 @@ interface Props {
   onToggle: (providerSlug: string, enabled: boolean) => void
   onPublish: () => void
   isPublishing: boolean
+  publishResults?: CrossPostResult[] | null
 }
 
-export function CrossPostingPanel({ post, providers, channels, onToggle, onPublish, isPublishing }: Props) {
+export function CrossPostingPanel({ post, providers, channels, onToggle, onPublish, isPublishing, publishResults }: Props) {
   const s3Base = process.env.NEXT_PUBLIC_S3_BASE_URL
   const coverSrc = post?.coverImageKey && s3Base ? `${s3Base}/${post.coverImageKey}` : null
   const isPublished = post?.status === 'PUBLISHED'
@@ -74,6 +76,21 @@ export function CrossPostingPanel({ post, providers, channels, onToggle, onPubli
           <button onClick={onPublish} disabled={btnDisabled} className="font-nav font-bold text-[12px] tracking-[0.06em] uppercase" style={{ marginTop: 22, width: '100%', background: isPublished ? 'rgba(255,255,255,0.1)' : '#ff3b30', color: '#fff', border: 'none', padding: 14, cursor: btnDisabled ? 'not-allowed' : 'pointer', opacity: btnDisabled ? 0.6 : 1, transition: 'opacity 0.15s' }}>
             {isPublishing ? 'Публикуется...' : isPublished ? 'Уже опубликовано' : 'Опубликовать в выбранные каналы'}
           </button>
+          {publishResults && publishResults.length > 0 && (
+            <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 7 }}>
+              {publishResults.map(r => (
+                <div key={r.slug} className="font-body font-light text-[13px]" style={{ color: r.success ? '#4caf50' : '#ff5a4a', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.03)', border: `1px solid ${r.success ? 'rgba(76,175,80,0.3)' : 'rgba(255,90,74,0.3)'}`, padding: '9px 12px' }}>
+                  <span style={{ fontWeight: 700 }}>{r.success ? '✓' : '✗'}</span>
+                  <span>
+                    {r.slug}
+                    {r.success && r.externalUrl
+                      ? <a href={r.externalUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', marginLeft: 6 }}>{' '}— опубликовано</a>
+                      : r.success ? ' — опубликовано' : ` — ошибка: ${r.error}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
