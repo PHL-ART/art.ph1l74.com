@@ -70,6 +70,7 @@ model Social {
   iconUrl   String?
   type      SocialType   @default(AFTER_POSTING)
   apiToken  String?
+  config    Json?
   createdAt DateTime     @default(now())
   links     SocialLink[]
 }
@@ -87,6 +88,7 @@ model MediaFile {
 model SocialLink {
   id        String   @id @default(cuid())
   url       String
+  error     String?
   postId    String
   socialId  String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
