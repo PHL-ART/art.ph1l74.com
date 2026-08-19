@@ -1,38 +1,68 @@
-# Task 1: Dependencies + Prisma migration
+### Task 1: DB Schema — Add `config` to Social and `error` to SocialLink
 
-From plan: docs/superpowers/plans/2026-06-28-admin-dashboard.md
+**Files:**
+- Modify: `prisma/schema.prisma`
 
-Files:
-- Modify: package.json (via npm install)
-- Modify: prisma/schema.prisma
-- Create: prisma/migrations/20260628_add_scheduled_at/migration.sql (auto-generated)
-- Modify: .env
+**Interfaces:**
+- Produces: `Social.config: Json?`, `SocialLink.error: String?`
 
-Interfaces:
-- Produces: Post.scheduledAt: DateTime? in Prisma schema and generated client
+- [ ] **Step 1: Read the current schema**
 
-Step 1: Install packages
-  npm install next-auth @reduxjs/toolkit react-redux redux-persist
-  npm install --save-dev @types/redux-persist
-  Expected: packages added to node_modules, package.json updated.
+Read `prisma/schema.prisma` and confirm:
+- `Social` does NOT yet have a `config` field
+- `SocialLink` does NOT yet have an `error` field
 
-Step 2: Add scheduledAt to prisma/schema.prisma after publishedAt DateTime? on the Post model:
-  scheduledAt   DateTime?
+- [ ] **Step 2: Add `config` to Social model**
 
-Step 3: Run migration
-  npx prisma migrate dev --name add_scheduled_at
-  Expected: migration created and applied
+In `prisma/schema.prisma`, find the `Social` model and add `config Json?` after `apiToken String?`:
 
-Step 4: Regenerate Prisma client
-  npx prisma generate
+```prisma
+model Social {
+  id        String       @id @default(cuid())
+  name      String
+  slug      String       @unique
+  iconUrl   String?
+  type      SocialType   @default(AFTER_POSTING)
+  apiToken  String?
+  config    Json?
+  createdAt DateTime     @default(now())
+  links     SocialLink[]
+}
+```
 
-Step 5: Add to .env:
-  NEXT_PUBLIC_S3_BASE_URL=https://s3.firstvds.ru/phlart
-  (replace with actual S3_ENDPOINT/S3_BUCKET from .env)
+- [ ] **Step 3: Add `error` to SocialLink model**
 
-Step 6: Verify tests still pass
-  npm test
+In `prisma/schema.prisma`, find the `SocialLink` model and add `error String?` after `url String`:
 
-Step 7: Commit
-  git add prisma/schema.prisma prisma/migrations/ src/generated/ package.json package-lock.json .env
-  git commit -m "feat: add scheduledAt to Post, install auth/redux deps"
+```prisma
+model SocialLink {
+  id        String   @id @default(cuid())
+  url       String
+  error     String?
+  postId    String
+  socialId  String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  social    Social   @relation(fields: [socialId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([postId, socialId])
+}
+```
+
+- [ ] **Step 4: Run migration**
+
+```bash
+npx prisma migrate dev --name add_crossposting_config_and_social_link_error
+```
+
+Expected: migration file created under `prisma/migrations/`, applied successfully, no errors.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add prisma/schema.prisma prisma/migrations/
+git commit -m "feat: add config to Social and error to SocialLink for crossposting"
+```
+
+---
+
