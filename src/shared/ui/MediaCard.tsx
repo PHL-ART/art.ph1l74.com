@@ -10,6 +10,7 @@ interface MediaCardProps {
   title: string
   slug: string
   coverImageKey?: string | null
+  firstPhotoKey?: string | null
   excerpt?: string | null
   publishedAt: Date | null
   categories: { id: string; name: string; slug: string }[]
@@ -22,6 +23,7 @@ export function MediaCard({
   title,
   slug,
   coverImageKey,
+  firstPhotoKey,
   excerpt,
   publishedAt,
   categories,
@@ -29,6 +31,7 @@ export function MediaCard({
   placeholderGradient = CARD_GRADIENTS[0],
   className,
 }: MediaCardProps) {
+  const thumbnailKey = coverImageKey ?? firstPhotoKey
   const date = formatDate(publishedAt)
 
   return (
@@ -49,7 +52,7 @@ export function MediaCard({
 
       {/* Обложка — без перехвата кликов (клик падает на растянутую ссылку) */}
       <PostThumbnail
-        coverImageKey={coverImageKey}
+        coverImageKey={thumbnailKey}
         title={title}
         placeholderGradient={placeholderGradient}
         className="pointer-events-none"

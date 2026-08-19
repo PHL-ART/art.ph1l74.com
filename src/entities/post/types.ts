@@ -12,7 +12,7 @@ export type Block =
   | TextBlock | PhotoBlock | PhotoGridBlock | PanoramaBlock
   | EmbedBlock | QuoteBlock | HeadingBlock
 
-export type PostPreview = Pick<Post, 'id' | 'title' | 'slug' | 'coverImageKey' | 'publishedAt' | 'isFeatured'> & {
+export type PostPreview = Pick<Post, 'id' | 'title' | 'slug' | 'coverImageKey' | 'publishedAt' | 'isFeatured' | 'body'> & {
   categories: Pick<Category, 'id' | 'name' | 'slug'>[]
   tags: Pick<Tag, 'id' | 'name' | 'slug'>[]
 }

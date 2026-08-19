@@ -10,12 +10,14 @@ import { extractLead } from '@/shared/lib/extractLead'
 import { CategoryChips } from '@/shared/ui/CategoryChips'
 import { MetaRow } from '@/shared/ui/MetaRow'
 import { CARD_GRADIENTS, HERO_GRADIENT } from '@/shared/lib/gradients'
+import { extractFirstPhotoKey } from '@/shared/lib/extractFirstPhoto'
 
 export const revalidate = 60
 
 export default async function HomePage() {
   const [featured, recent] = await Promise.all([getFeaturedPost(), getRecentPosts(12)])
   const heroExcerpt = featured ? extractLead(featured.body) : null
+  const heroImageKey = featured?.coverImageKey ?? (featured ? extractFirstPhotoKey(featured.body) : null)
 
   return (
     <div style={{ background: 'var(--color-bg)' }}>
@@ -28,9 +30,9 @@ export default async function HomePage() {
             style={{ minHeight: 'clamp(420px, 52vh, 580px)' }}
           >
             {/* Обложка или градиент-фон */}
-            {featured.coverImageKey ? (
+            {heroImageKey ? (
               <Image
-                src={getPostUrl(featured.coverImageKey)}
+                src={getPostUrl(heroImageKey)}
                 alt={featured.title}
                 fill
                 priority
@@ -149,6 +151,7 @@ export default async function HomePage() {
                 title={post.title}
                 slug={post.slug}
                 coverImageKey={post.coverImageKey}
+                firstPhotoKey={extractFirstPhotoKey(post.body)}
                 publishedAt={post.publishedAt}
                 categories={post.categories}
                 tags={post.tags}

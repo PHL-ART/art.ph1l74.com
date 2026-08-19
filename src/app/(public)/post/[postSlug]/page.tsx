@@ -74,44 +74,30 @@ export default async function PostPage({ params }: Props) {
       <ViewCounter postSlug={params.postSlug} />
 
       <article>
-        {/* ── Герой с обложкой или радиальным градиентом ───────────── */}
-        <div
-          className="relative w-full overflow-hidden"
-          style={{ height: 'clamp(280px, 38vh, 460px)' }}
-        >
-          {post.coverImageKey ? (
-            <>
-              <Image
-                src={getPostUrl(post.coverImageKey)}
-                alt={post.title}
-                fill
-                priority
-                className="object-cover"
-                sizes="100vw"
-              />
-              <div
-                className="absolute inset-0"
-                style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-bg) 100%)' }}
-              />
-            </>
-          ) : (
+        {/* ── Герой с обложкой (только если есть coverImageKey) ────── */}
+        {post.coverImageKey && (
+          <div
+            className="relative w-full overflow-hidden"
+            style={{ height: 'clamp(200px, 28vh, 340px)' }}
+          >
+            <Image
+              src={getPostUrl(post.coverImageKey)}
+              alt={post.title}
+              fill
+              priority
+              className="object-cover"
+              sizes="100vw"
+            />
             <div
               className="absolute inset-0"
-              style={{
-                background: 'radial-gradient(120% 90% at 12% 0%, #ff3b2f 0%, #b8201a 26%, #5c1512 55%, #1c0c0b 100%)',
-              }}
-            >
-              <div
-                className="absolute inset-0"
-                style={{ background: 'linear-gradient(to bottom, transparent 50%, var(--color-bg) 100%)' }}
-              />
-            </div>
-          )}
-        </div>
+              style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-bg) 100%)' }}
+            />
+          </div>
+        )}
 
         {/* ── Шапка поста ─────────────────────────────────────────── */}
         <div className="mx-auto" style={{ maxWidth: '740px', padding: '0 44px' }}>
-          <header style={{ marginTop: '-32px', position: 'relative', zIndex: 1 }}>
+          <header style={{ marginTop: post.coverImageKey ? '-32px' : '48px', position: 'relative', zIndex: 1 }}>
             <CategoryChips
               categories={post.categories}
               size="large"

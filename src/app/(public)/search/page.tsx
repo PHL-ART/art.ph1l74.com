@@ -8,6 +8,8 @@ import { extractLead } from '@/shared/lib/extractLead'
 import { CategoryChips } from '@/shared/ui/CategoryChips'
 import { MetaRow } from '@/shared/ui/MetaRow'
 import { PostThumbnail } from '@/shared/ui/PostThumbnail'
+import { extractFirstPhotoKey } from '@/shared/lib/extractFirstPhoto'
+import { getPostUrl } from '@/shared/lib/getPostUrl'
 
 interface Props {
   searchParams: { q?: string; cat?: string; tag?: string }
@@ -88,16 +90,13 @@ interface SearchResultRowProps {
 function SearchResultRow({ post, index, query }: SearchResultRowProps) {
   const excerpt = extractLead(post.body)
   const date = formatDate(post.publishedAt)
+  const imageKey = post.coverImageKey ?? extractFirstPhotoKey(post.body)
+  const imageUrl = imageKey ? getPostUrl(imageKey) : null
 
   return (
     <div
       className="group relative"
-      style={{
-        display: 'flex',
-        gap: '28px',
-        padding: '24px 0',
-        borderBottom: '1px solid var(--color-hairline)',
-      }}
+      style={{ borderBottom: '1px solid var(--color-hairline)' }}
     >
       {/* Растянутая ссылка покрывает всю строку */}
       <Link
@@ -106,61 +105,76 @@ function SearchResultRow({ post, index, query }: SearchResultRowProps) {
         aria-label={post.title}
       />
 
-      {/* Миниатюра */}
-      <PostThumbnail
-        coverImageKey={post.coverImageKey}
-        title={post.title}
-        index={index}
-        className="flex-shrink-0 z-[2] pointer-events-none"
-        width={180}
-        height={120}
-        sizes="180px"
-      />
-
-      {/* Текстовый блок */}
-      <div className="relative z-[2] pointer-events-none" style={{ flex: 1, minWidth: 0 }}>
-        {post.categories.length > 0 && (
-          <CategoryChips
-            categories={post.categories}
-            className="pointer-events-auto mb-[6px]"
+      {/* ── Мобиль: оверлей-карточка ───────────────────────────── */}
+      <div className="flex sm:hidden flex-col justify-end relative overflow-hidden" style={{ height: '160px' }}>
+        {imageUrl ? (
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${imageUrl})` }}
+          />
+        ) : (
+          <PostThumbnail
+            coverImageKey={null}
+            title={post.title}
+            index={index}
+            className="absolute inset-0"
+            width="100%"
+            height="100%"
           />
         )}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, rgba(10,8,9,0.92) 40%, rgba(10,8,9,0.2) 100%)' }}
+        />
+        <div className="relative z-[2] pointer-events-none" style={{ padding: '12px 14px 14px' }}>
+          {post.categories.length > 0 && (
+            <CategoryChips categories={post.categories} className="pointer-events-auto mb-[6px]" />
+          )}
+          <h2
+            className="font-display font-bold lowercase"
+            style={{ fontSize: '18px', lineHeight: '1.05', letterSpacing: '-0.01em', color: '#fff' }}
+          >
+            {post.title}
+          </h2>
+          <div className="font-nav" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: '4px' }}>
+            {date}
+          </div>
+        </div>
+      </div>
 
-        <h2
-          className="font-display font-bold lowercase group-hover:opacity-80 transition-opacity"
-          style={{
-            fontSize: '22px',
-            lineHeight: '1.05',
-            letterSpacing: '-0.01em',
-            color: 'var(--color-text)',
-            marginBottom: excerpt ? '8px' : '6px',
-          }}
-          dangerouslySetInnerHTML={{ __html: highlightQuery(post.title, query) }}
+      {/* ── Десктоп: строка ────────────────────────────────────── */}
+      <div
+        className="hidden sm:flex"
+        style={{ gap: '28px', padding: '24px 0' }}
+      >
+        <PostThumbnail
+          coverImageKey={imageKey}
+          title={post.title}
+          index={index}
+          className="flex-shrink-0 z-[2] pointer-events-none"
+          width={180}
+          height={120}
+          sizes="180px"
         />
 
-        {excerpt && (
-          <p
-            className="font-body"
-            style={{
-              fontWeight: 300,
-              fontSize: '14px',
-              lineHeight: '1.6',
-              color: 'var(--color-caption)',
-              overflow: 'hidden',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              marginBottom: '6px',
-            }}
-            dangerouslySetInnerHTML={{ __html: highlightQuery(excerpt, query) }}
+        <div className="relative z-[2] pointer-events-none" style={{ flex: 1, minWidth: 0 }}>
+          {post.categories.length > 0 && (
+            <CategoryChips categories={post.categories} className="pointer-events-auto mb-[6px]" />
+          )}
+          <h2
+            className="font-display font-bold lowercase group-hover:opacity-80 transition-opacity"
+            style={{ fontSize: '22px', lineHeight: '1.05', letterSpacing: '-0.01em', color: 'var(--color-text)', marginBottom: excerpt ? '8px' : '6px' }}
+            dangerouslySetInnerHTML={{ __html: highlightQuery(post.title, query) }}
           />
-        )}
-
-        <MetaRow
-          date={date}
-          tags={post.tags}
-          className="pointer-events-auto"
-        />
+          {excerpt && (
+            <p
+              className="font-body"
+              style={{ fontWeight: 300, fontSize: '14px', lineHeight: '1.6', color: 'var(--color-caption)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginBottom: '6px' }}
+              dangerouslySetInnerHTML={{ __html: highlightQuery(excerpt, query) }}
+            />
+          )}
+          <MetaRow date={date} tags={post.tags} className="pointer-events-auto" />
+        </div>
       </div>
     </div>
   )
@@ -215,7 +229,7 @@ export default async function SearchPage({ searchParams }: Props) {
   const hasContent = query || isBrowseMode
 
   return (
-    <div style={{ background: 'var(--color-bg)', padding: '52px 44px 80px', minHeight: '80vh' }}>
+    <div className="px-5 md:px-11" style={{ background: 'var(--color-bg)', paddingTop: '52px', paddingBottom: '80px', minHeight: '80vh' }}>
       {hasContent ? (
         <>
           <div

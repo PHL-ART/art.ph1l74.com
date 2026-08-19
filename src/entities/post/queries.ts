@@ -12,15 +12,16 @@ const postPreviewSelect = {
   coverImageKey: true,
   publishedAt: true,
   isFeatured: true,
+  body: true,
   categories: { select: categorySelect },
   tags: { select: tagSelect },
 } as const
 
-export async function getFeaturedPost(): Promise<(PostPreview & { body: unknown }) | null> {
+export async function getFeaturedPost(): Promise<PostPreview | null> {
   return prisma.post.findFirst({
     where: { status: 'PUBLISHED', isFeatured: true },
     orderBy: { publishedAt: 'desc' },
-    select: { ...postPreviewSelect, body: true },
+    select: postPreviewSelect,
   })
 }
 
@@ -65,7 +66,7 @@ export async function getPostBySlug(slug: string): Promise<PostFull | null> {
 export async function getPostsByCategory(
   categorySlug: string,
   { page, limit }: { page: number; limit: number }
-): Promise<{ posts: (PostPreview & { body: unknown })[]; total: number }> {
+): Promise<{ posts: PostPreview[]; total: number }> {
   const where = {
     status: 'PUBLISHED' as const,
     categories: { some: { slug: categorySlug } },
@@ -76,7 +77,7 @@ export async function getPostsByCategory(
       orderBy: { publishedAt: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
-      select: { ...postPreviewSelect, body: true },
+      select: postPreviewSelect,
     }),
     prisma.post.count({ where }),
   ])
